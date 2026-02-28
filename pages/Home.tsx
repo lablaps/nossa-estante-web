@@ -92,15 +92,15 @@ const Home: React.FC = () => {
 
           <div className="flex gap-4 overflow-x-auto no-scrollbar px-6 pb-4">
             {books.map((book) => (
-              <Link to={`/livro/${book.id}`} key={book.id} className="min-w-[140px] group">
+              <Link to={`/livro/${book.id}`} key={book.id} className="w-[140px] flex-shrink-0 group">
                 <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-lg mb-3 bg-gray-100">
-                  <img src={book.photos[0]} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt={book.title} />
-                  <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-lg">
+                  <img src={book.photos[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={book.title} />
+                  <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-lg border border-white/10">
                     <span className="text-[10px] font-bold text-white">{book.distance}</span>
                   </div>
                 </div>
-                <h3 className="font-bold text-sm truncate dark:text-white">{book.title}</h3>
-                <p className="text-[10px] text-text-muted truncate mb-1">{book.author}</p>
+                <h3 className="font-bold text-sm truncate dark:text-white w-full">{book.title}</h3>
+                <p className="text-[10px] text-text-muted truncate mb-1 w-full">{book.author}</p>
                 <div className="flex items-center gap-1">
                   <span className="material-symbols-outlined text-green-500 text-[14px] filled">token</span>
                   <span className="text-xs font-black dark:text-white">{book.creditsCost} Credits</span>
