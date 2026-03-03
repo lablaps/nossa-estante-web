@@ -6,6 +6,7 @@ export interface User {
   reputation: number;
   credits: number;
   avatar?: string;
+  role?: string;
 }
 
 export type BookStatus = 'Available' | 'In Exchange' | 'Pending' | 'Exchanged';
@@ -20,7 +21,7 @@ export interface Book {
   language: string;
   ownerId: string;
   status: BookStatus;
-  condition: BookCondition;
+  material_state: string;
   creditsCost: number;
   locationApprox: string;
   distance?: string;
@@ -61,4 +62,16 @@ export interface Trade {
   status: TradeStatus;
   meetingPoint: string;
   qrCodeFake: string;
+}
+
+export interface BookRequestDTO {
+  isbn: string;
+  material_state: string;
+  status: string;
+  cost: number;
+  title: string;
+  author: string;
+  gender: string;
+  pages: string;
+  synopses: string;
 }

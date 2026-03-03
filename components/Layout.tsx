@@ -60,6 +60,14 @@ const Layout: React.FC<{ children: React.ReactNode; hideBottomNav?: boolean }> =
               <span className="text-sm">{item.label}</span>
             </NavLink>
           ))}
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold transition-all text-text-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/10 dark:hover:text-red-400 mt-auto mb-6"
+          >
+            <span className="material-symbols-outlined text-[22px]">logout</span>
+            <span className="text-sm">Logout</span>
+          </button>
         </nav>
       </aside>
 

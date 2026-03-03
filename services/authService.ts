@@ -16,7 +16,7 @@ class AuthService {
   login(email: string, password_raw: string): { token: string; user: User } | null {
     const users = dbService.getUsers();
     const user = users.find(u => u.email === email);
-    
+
     if (user) {
       // In a real mock, we'd check password, but here we just simulate
       const header = this.base64Encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -27,14 +27,14 @@ class AuthService {
       }));
       const signature = 'fake_signature';
       const token = `${header}.${payload}.${signature}`;
-      
+
       localStorage.setItem(AUTH_KEY, token);
       return { token, user };
     }
     return null;
   }
 
-  signup(name: string, email: string, password_raw: string): { token: string; user: User } | null {
+  signup(name: string, email: string, password_raw: string, role: string = 'REGULAR'): { token: string; user: User } | null {
     const users = dbService.getUsers();
     if (users.some(u => u.email === email)) return null;
 
@@ -44,7 +44,8 @@ class AuthService {
       email,
       reputation: 5.0,
       credits: 5,
-      avatar: `https://picsum.photos/seed/${name}/200`
+      avatar: `https://picsum.photos/seed/${name}/200`,
+      role
     };
 
     dbService.saveUsers([...users, newUser]);
@@ -62,7 +63,7 @@ class AuthService {
     try {
       const parts = token.split('.');
       const payload = JSON.parse(this.base64Decode(parts[1]));
-      
+
       if (payload.exp < Math.floor(Date.now() / 1000)) {
         this.logout();
         return null;

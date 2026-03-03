@@ -40,10 +40,22 @@ const Home: React.FC = () => {
 
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-black tracking-tight dark:text-white">Nossa Estante</h1>
-            <button className="relative p-2">
-              <span className="material-symbols-outlined text-text-main dark:text-white">notifications</span>
-              <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border border-white"></span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  authService.logout();
+                  window.location.reload();
+                }}
+                className="p-2 text-text-muted hover:text-red-500 transition-colors"
+                title="Logout"
+              >
+                <span className="material-symbols-outlined">logout</span>
+              </button>
+              <button className="relative p-2">
+                <span className="material-symbols-outlined text-text-main dark:text-white">notifications</span>
+                <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border border-white"></span>
+              </button>
+            </div>
           </div>
 
           {/* Search Bar */}

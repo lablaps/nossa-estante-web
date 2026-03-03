@@ -52,7 +52,7 @@ const BookDetails: React.FC = () => {
           <div className="flex flex-wrap gap-2">
             <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold">{book.category}</span>
             <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold">{book.language}</span>
-            <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold">{book.condition === 'New' ? 'Novo' : 'Muito Bom'}</span>
+            <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold">{book.material_state}</span>
           </div>
 
           <div className="border-y border-black/5 dark:border-white/10 py-4 flex items-center justify-between">
@@ -74,8 +74,8 @@ const BookDetails: React.FC = () => {
           <div className="space-y-2">
             <h3 className="font-bold dark:text-white">Localização Aproximada</h3>
             <div className="h-32 bg-gray-200 dark:bg-surface-dark rounded-xl flex items-center justify-center relative overflow-hidden">
-               <img src="https://picsum.photos/seed/map_loc/600/200" className="w-full h-full object-cover opacity-50" alt="" />
-               <div className="absolute bg-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">a {book.distance} de você</div>
+              <img src="https://picsum.photos/seed/map_loc/600/200" className="w-full h-full object-cover opacity-50" alt="" />
+              <div className="absolute bg-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">a {book.distance} de você</div>
             </div>
           </div>
         </div>
@@ -85,7 +85,7 @@ const BookDetails: React.FC = () => {
             <span className="text-xs text-text-muted font-medium">Custo Total</span>
             <span className="text-2xl font-black text-primary">{book.creditsCost} Créditos</span>
           </div>
-          <button 
+          <button
             onClick={handleRedeem}
             className="px-8 py-4 bg-primary text-text-main font-extrabold rounded-2xl shadow-lg shadow-primary/30 flex items-center gap-2"
           >

@@ -13,12 +13,14 @@ const AddBook: React.FC = () => {
   const [formData, setFormData] = useState({
     title: '',
     author: '',
-    category: 'Ficção',
+    gender: 'Ficção',
     language: 'Português',
     condition: 'New' as BookCondition,
     synopsis: '',
     ownerNotes: '',
-    isbn: ''
+    isbn: '',
+    pages: '',
+    cost: 2
   });
 
   const conditionLabels: Record<BookCondition, string> = {
@@ -46,12 +48,12 @@ const AddBook: React.FC = () => {
       title: formData.title,
       author: formData.author,
       isbn: formData.isbn || 'N/A',
-      category: formData.category,
+      category: formData.gender,
       language: formData.language,
       ownerId: user.id,
       status: 'Available',
-      condition: formData.condition,
-      creditsCost: 2,
+      material_state: conditionLabels[formData.condition],
+      creditsCost: formData.cost,
       locationApprox: 'Minha Área',
       distance: '0.0km',
       photos: ['https://picsum.photos/seed/newbook/400/600'],
@@ -120,11 +122,11 @@ const AddBook: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <label className="block space-y-2">
-                  <span className="text-sm font-bold dark:text-white">Categoria</span>
+                  <span className="text-sm font-bold dark:text-white">Gênero</span>
                   <div className="relative">
                     <select
-                      value={formData.category}
-                      onChange={e => setFormData({ ...formData, category: e.target.value })}
+                      value={formData.gender}
+                      onChange={e => setFormData({ ...formData, gender: e.target.value })}
                       className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white border-0 shadow-sm font-bold text-sm appearance-none"
                     >
                       <option>Ficção</option>
@@ -136,6 +138,20 @@ const AddBook: React.FC = () => {
                     <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">expand_more</span>
                   </div>
                 </label>
+                <label className="block space-y-2">
+                  <span className="text-sm font-bold dark:text-white">Páginas</span>
+                  <input
+                    type="number"
+                    value={formData.pages}
+                    onChange={e => setFormData({ ...formData, pages: e.target.value })}
+                    placeholder="ex: 250"
+                    className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-2 focus:ring-primary border-0 shadow-sm placeholder:text-text-muted/50 font-medium"
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <label className="block space-y-2">
                   <span className="text-sm font-bold dark:text-white">Idioma</span>
                   <div className="relative">
@@ -151,6 +167,17 @@ const AddBook: React.FC = () => {
                     </select>
                     <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">expand_more</span>
                   </div>
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-sm font-bold dark:text-white">Custo (Créditos)</span>
+                  <input
+                    type="number"
+                    value={formData.cost}
+                    onChange={e => setFormData({ ...formData, cost: parseInt(e.target.value) })}
+                    className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-2 focus:ring-primary border-0 shadow-sm font-medium"
+                    min="1"
+                    required
+                  />
                 </label>
               </div>
             </div>

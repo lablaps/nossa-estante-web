@@ -10,6 +10,7 @@ import AddBook from './pages/AddBook';
 import BookDetails from './pages/BookDetails';
 import Chat from './pages/Chat';
 import Wallet from './pages/Wallet';
+import Signup from './pages/Signup';
 import { authService } from './services/authService';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -34,6 +35,7 @@ const App: React.FC = () => {
       <Route path="/" element={<PrivateRoute><Navigate to="/home" replace /></PrivateRoute>} />
       <Route path="/intro" element={<Onboarding />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
       <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
       <Route path="/explore" element={<PrivateRoute><Explore /></PrivateRoute>} />
       <Route path="/minha-estante" element={<PrivateRoute><MyShelf /></PrivateRoute>} />
