@@ -1,32 +1,68 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { dbService } from '../services/dbService';
 import { authService } from '../services/authService';
 import Layout from '../components/Layout';
 import ReferenceButtons from '../components/ReferenceButtons';
+import { Book, User } from '../types';
 
 const BookDetails: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = authService.getCurrentUser();
-  const book = dbService.getBooks().find(b => b.id === id);
+  const [user, setUser] = useState<User | null>(null);
+  const [book, setBook] = useState<Book | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!book) return <div>Livro não encontrado!</div>;
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      try {
+        const [userData, bookData] = await Promise.all([
+          authService.getCurrentUser(),
+          dbService.getBookById(id)
+        ]);
+        setUser(userData);
+        setBook(bookData);
+      } catch (error) {
+        console.error('Error fetching book details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleRedeem = () => {
-    if (!user) return;
-    const tradeId = `trade_${Date.now()}`;
-    dbService.createTrade({
-      id: tradeId,
-      bookId: book.id,
-      fromUserId: book.ownerId,
-      toUserId: user.id,
-      status: 'ongoing',
-      meetingPoint: 'Ponto de Segurança: Estação Central',
-      qrCodeFake: 'MOCK_QR_CODE'
-    });
-    navigate(`/chat/${tradeId}`);
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!book) return <div className="p-8 text-center dark:text-white">Livro não encontrado!</div>;
+
+  const handleRedeem = async () => {
+    if (!user || !book) return;
+    try {
+      const tradeId = `trade_${Date.now()}`;
+      await dbService.createTrade({
+        id: tradeId,
+        bookId: book.id,
+        fromUserId: book.ownerId,
+        toUserId: user.id || '',
+        status: 'ongoing',
+        meetingPoint: 'Ponto de Segurança: Estação Central',
+        qrCodeFake: 'MOCK_QR_CODE'
+      });
+      navigate(`/chat/${tradeId}`);
+    } catch (error) {
+      console.error('Error creating trade:', error);
+      alert('Erro ao resgatar livro. Tente novamente.');
+    }
   };
 
   return (
@@ -34,13 +70,13 @@ const BookDetails: React.FC = () => {
       <ReferenceButtons pngUrl="https://picsum.photos/400/800" />
       <div className="flex flex-col h-full bg-background-light dark:bg-background-dark pb-24">
         <header className="sticky top-0 z-10 flex items-center p-4 justify-between bg-white/80 dark:bg-surface-dark/80 backdrop-blur-sm">
-          <button onClick={() => navigate(-1)} className="p-2"><span className="material-symbols-outlined">arrow_back</span></button>
+          <button onClick={() => navigate(-1)} className="p-2 dark:text-white"><span className="material-symbols-outlined">arrow_back</span></button>
           <h2 className="text-lg font-bold dark:text-white">Detalhes do Livro</h2>
-          <button className="p-2"><span className="material-symbols-outlined">share</span></button>
+          <button className="p-2 dark:text-white"><span className="material-symbols-outlined">share</span></button>
         </header>
 
         <div className="w-full h-80 relative flex items-center justify-center bg-gray-100 dark:bg-surface-dark">
-          <img src={book.photos[0]} className="h-64 shadow-2xl rounded-lg" alt="" />
+          <img src={book.photos?.[0] || 'https://picsum.photos/seed/book/200/300'} className="h-64 shadow-2xl rounded-lg" alt="" />
         </div>
 
         <div className="px-5 pt-6 space-y-4">
@@ -57,10 +93,12 @@ const BookDetails: React.FC = () => {
 
           <div className="border-y border-black/5 dark:border-white/10 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="size-12 bg-gray-200 rounded-full"></div>
+              <div className="size-12 bg-gray-200 rounded-full overflow-hidden">
+                <img src={book.ownerAvatar || 'https://picsum.photos/seed/owner/200'} alt="" />
+              </div>
               <div>
                 <p className="text-xs text-text-muted">Dono(a)</p>
-                <p className="font-bold dark:text-white">Maria Silva</p>
+                <p className="font-bold dark:text-white">{book.ownerName || 'Carregando...'}</p>
               </div>
             </div>
             <button className="p-2 text-primary"><span className="material-symbols-outlined">chat</span></button>
@@ -75,7 +113,7 @@ const BookDetails: React.FC = () => {
             <h3 className="font-bold dark:text-white">Localização Aproximada</h3>
             <div className="h-32 bg-gray-200 dark:bg-surface-dark rounded-xl flex items-center justify-center relative overflow-hidden">
               <img src="https://picsum.photos/seed/map_loc/600/200" className="w-full h-full object-cover opacity-50" alt="" />
-              <div className="absolute bg-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">a {book.distance} de você</div>
+              <div className="absolute bg-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">a {book.distance || '0km'} de você</div>
             </div>
           </div>
         </div>

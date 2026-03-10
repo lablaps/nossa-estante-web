@@ -1,15 +1,15 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dbService } from '../services/dbService';
 import { authService } from '../services/authService';
 import Layout from '../components/Layout';
-import { Book, BookCondition } from '../types';
+import { Book, BookCondition, User } from '../types';
 import ReferenceButtons from '../components/ReferenceButtons';
 
 const AddBook: React.FC = () => {
   const navigate = useNavigate();
-  const user = authService.getCurrentUser();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -22,6 +22,20 @@ const AddBook: React.FC = () => {
     pages: '',
     cost: 2
   });
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const conditionLabels: Record<BookCondition, string> = {
     'New': 'Novo',
@@ -39,31 +53,48 @@ const AddBook: React.FC = () => {
     'Fair': 'Bastante usado, com marcas evidentes.'
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      alert('Você precisa estar logado para adicionar um livro.');
+      return;
+    }
 
-    const newBook: Book = {
-      id: `book_${Date.now()}`,
-      title: formData.title,
-      author: formData.author,
-      isbn: formData.isbn || 'N/A',
-      category: formData.gender,
-      language: formData.language,
-      ownerId: user.id,
-      status: 'Available',
-      material_state: conditionLabels[formData.condition],
-      creditsCost: formData.cost,
-      locationApprox: 'Minha Área',
-      distance: '0.0km',
-      photos: ['https://picsum.photos/seed/newbook/400/600'],
-      synopsis: formData.synopsis,
-      ownerNotes: formData.ownerNotes
-    };
+    try {
+      const newBook: Partial<Book> = {
+        title: formData.title,
+        author: formData.author,
+        isbn: formData.isbn || 'N/A',
+        category: formData.gender,
+        language: formData.language,
+        ownerId: user.id || '',
+        status: 'Available',
+        material_state: conditionLabels[formData.condition],
+        creditsCost: formData.cost,
+        locationApprox: 'Minha Área',
+        distance: '0.0km',
+        photos: ['https://picsum.photos/seed/newbook/400/600'],
+        synopsis: formData.synopsis,
+        ownerNotes: formData.ownerNotes
+      };
 
-    dbService.addBook(newBook);
-    navigate('/minha-estante');
+      await dbService.addBook(newBook);
+      navigate('/minha-estante');
+    } catch (error) {
+      console.error('Error adding book:', error);
+      alert('Erro ao adicionar livro. Verifique se o servidor está rodando.');
+    }
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -74,11 +105,11 @@ const AddBook: React.FC = () => {
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <h2 className="flex-1 text-center font-black text-lg text-text-main dark:text-white">Registrar Livro</h2>
-          <div className="w-10"></div> {/* Spacer for symmetry */}
+          <div className="w-10"></div>
         </header>
 
         <form onSubmit={handleSubmit} className="px-6 pt-8 space-y-8 max-w-2xl mx-auto w-full">
-          {/* Scan Section - Compacted as it's secondary to the manual fields in reference */}
+          {/* Scan Section */}
           <div className="bg-surface-dark/40 rounded-[24px] p-4 flex items-center justify-between border border-white/5">
             <div className="flex items-center gap-4">
               <div className="size-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary">

@@ -1,66 +1,128 @@
-
-import { INITIAL_USERS, INITIAL_BOOKS, INITIAL_TRANSACTIONS, INITIAL_TRADES, INITIAL_CHATS } from '../mock/initialData';
+import api from './api';
 import { User, Book, Transaction, Trade, Chat } from '../types';
 
-const STORAGE_KEYS = {
-  USERS: 'ns_users',
-  BOOKS: 'ns_books',
-  TRANSACTIONS: 'ns_transactions',
-  TRADES: 'ns_trades',
-  CHATS: 'ns_chats'
-};
-
 class DBService {
-  private get<T>(key: string, initial: T): T {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : initial;
-  }
-
-  private set<T>(key: string, data: T): void {
-    localStorage.setItem(key, JSON.stringify(data));
-  }
-
   // Users
-  getUsers(): User[] { return this.get(STORAGE_KEYS.USERS, INITIAL_USERS); }
-  saveUsers(users: User[]) { this.set(STORAGE_KEYS.USERS, users); }
-  
+  async getUsers(): Promise<User[]> {
+    const response = await api.get('/users');
+    return response.data;
+  }
+
+  async saveUsers(users: User[]): Promise<void> {
+    await api.put('/users', users);
+  }
+
   // Books
-  getBooks(): Book[] { return this.get(STORAGE_KEYS.BOOKS, INITIAL_BOOKS); }
-  addBook(book: Book) {
-    const books = this.getBooks();
-    this.set(STORAGE_KEYS.BOOKS, [...books, book]);
-  }
-
-  // Trades
-  getTrades(): Trade[] { return this.get(STORAGE_KEYS.TRADES, INITIAL_TRADES); }
-  createTrade(trade: Trade) {
-    const trades = this.getTrades();
-    this.set(STORAGE_KEYS.TRADES, [...trades, trade]);
-    
-    // Create empty chat for trade
-    const chats = this.getChats();
-    const newChat: Chat = {
-      tradeId: trade.id,
-      participants: [trade.fromUserId, trade.toUserId],
-      messages: []
+  private mapBook(b: any): Book {
+    return {
+      id: b.id?.toString() || '',
+      title: b.title || 'Untitled',
+      author: b.author || 'Unknown Author',
+      isbn: b.isbn || '',
+      category: b.gender || 'General',
+      language: b.language || 'Portuguese',
+      ownerId: b.userId?.toString() || b.user || '',
+      status: b.status || 'Available',
+      material_state: b.material_state || 'Good',
+      creditsCost: Number(b.cost) || 0,
+      locationApprox: b.location || 'São Luís, MA',
+      distance: '1.2km', // Mock for now
+      photos: (b.photos && b.photos.length > 0) ? b.photos : [`https://picsum.photos/seed/${b.id || Math.random()}/400/600`],
+      synopsis: b.synopses || b.synopsis || '',
+      ownerNotes: b.notes || ''
     };
-    this.set(STORAGE_KEYS.CHATS, [...chats, newChat]);
   }
 
-  // Chats
-  getChats(): Chat[] { return this.get(STORAGE_KEYS.CHATS, INITIAL_CHATS); }
-  addMessage(tradeId: string, message: any) {
-    const chats = this.getChats();
-    const chatIndex = chats.findIndex(c => c.tradeId === tradeId);
-    if (chatIndex !== -1) {
-      chats[chatIndex].messages.push(message);
-      this.set(STORAGE_KEYS.CHATS, chats);
+  async getBooks(): Promise<Book[]> {
+    try {
+      const response = await api.get('/books');
+      const data = response.data;
+
+      // Handle Spring HATEOAS CollectionModel or Page
+      let rawBooks: any[] = [];
+      if (data._embedded && Array.isArray(data._embedded.bookResponseList)) {
+        rawBooks = data._embedded.bookResponseList;
+      } else if (Array.isArray(data.content)) {
+        rawBooks = data.content;
+      } else if (Array.isArray(data)) {
+        rawBooks = data;
+      }
+
+      return rawBooks.map(b => this.mapBook(b));
+    } catch (error) {
+      console.error('Error in getBooks:', error);
+      return [];
     }
   }
 
+  async getMyBooks(): Promise<Book[]> {
+    try {
+      const response = await api.get('/books/me');
+      const data = response.data;
+
+      let rawBooks: any[] = [];
+      if (data._embedded && Array.isArray(data._embedded.bookResponseList)) {
+        rawBooks = data._embedded.bookResponseList;
+      } else if (Array.isArray(data.content)) {
+        rawBooks = data.content;
+      } else if (Array.isArray(data)) {
+        rawBooks = data;
+      }
+
+      return rawBooks.map(b => this.mapBook(b));
+    } catch (error) {
+      console.error('Error in getMyBooks:', error);
+      return [];
+    }
+  }
+
+  async addBook(book: Partial<Book>): Promise<Book> {
+    // Map frontend Book to backend BookRequestDTO if necessary
+    const dto = {
+      isbn: book.isbn,
+      material_state: book.material_state,
+      status: book.status,
+      cost: book.creditsCost,
+      title: book.title,
+      author: book.author,
+      gender: book.category,
+      pages: '0', // Adjust if possible
+      synopses: book.synopsis
+    };
+    const response = await api.post('/books', dto);
+    return this.mapBook(response.data);
+  }
+
+  async getBookById(id: string): Promise<Book> {
+    const response = await api.get(`/books/${id}`);
+    return this.mapBook(response.data);
+  }
+
+  // Trades
+  async getTrades(): Promise<Trade[]> {
+    const response = await api.get('/trades');
+    return response.data;
+  }
+
+  async createTrade(trade: Trade): Promise<Trade> {
+    const response = await api.post('/trades', trade);
+    return response.data;
+  }
+
+  // Chats
+  async getChats(): Promise<Chat[]> {
+    const response = await api.get('/chats');
+    return response.data;
+  }
+
+  async addMessage(tradeId: string, message: any): Promise<void> {
+    await api.post(`/chats/${tradeId}/messages`, message);
+  }
+
   // Transactions
-  getTransactions(userId: string): Transaction[] {
-    return this.get(STORAGE_KEYS.TRANSACTIONS, INITIAL_TRANSACTIONS).filter(t => t.userId === userId);
+  async getTransactions(userId: string): Promise<Transaction[]> {
+    const response = await api.get(`/transactions/user/${userId}`);
+    return response.data;
   }
 }
 

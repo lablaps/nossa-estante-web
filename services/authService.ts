@@ -1,83 +1,79 @@
-
-import { dbService } from './dbService';
+import api from './api';
 import { User } from '../types';
 
 const AUTH_KEY = 'ns_auth_token';
+const REFRESH_KEY = 'ns_refresh_token';
 
 class AuthService {
-  private base64Encode(str: string) {
-    return btoa(unescape(encodeURIComponent(str)));
-  }
-
-  private base64Decode(str: string) {
-    return decodeURIComponent(escape(atob(str)));
-  }
-
-  login(email: string, password_raw: string): { token: string; user: User } | null {
-    const users = dbService.getUsers();
-    const user = users.find(u => u.email === email);
-
-    if (user) {
-      // In a real mock, we'd check password, but here we just simulate
-      const header = this.base64Encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-      const payload = this.base64Encode(JSON.stringify({
-        userId: user.id,
-        email: user.email,
-        exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24h
-      }));
-      const signature = 'fake_signature';
-      const token = `${header}.${payload}.${signature}`;
-
-      localStorage.setItem(AUTH_KEY, token);
-      return { token, user };
-    }
-    return null;
-  }
-
-  signup(name: string, email: string, password_raw: string, role: string = 'REGULAR'): { token: string; user: User } | null {
-    const users = dbService.getUsers();
-    if (users.some(u => u.email === email)) return null;
-
-    const newUser: User = {
-      id: `user_${Date.now()}`,
-      name,
-      email,
-      reputation: 5.0,
-      credits: 5,
-      avatar: `https://picsum.photos/seed/${name}/200`,
-      role
+  private mapUser(u: any): User {
+    return {
+      id: u.id?.toString() || '',
+      name: u.name || 'User',
+      email: u.email || '',
+      reputation: u.reputation || 5.0,
+      credits: u.credits || 0,
+      avatar: u.avatar || `https://picsum.photos/seed/${u.id}/200`,
+      role: u.role
     };
+  }
 
-    dbService.saveUsers([...users, newUser]);
-    return this.login(email, password_raw);
+  async login(email: string, password_raw: string): Promise<{ token: string; user: User } | null> {
+    try {
+      const response = await api.post('/auth/login', {
+        email,
+        password: password_raw
+      });
+
+      const { accessToken, refreshToken } = response.data;
+      localStorage.setItem(AUTH_KEY, accessToken);
+      localStorage.setItem(REFRESH_KEY, refreshToken);
+
+      const user = await this.getCurrentUser();
+      if (!user) return null;
+
+      return { token: accessToken, user };
+    } catch (error) {
+      console.error('Login failed:', error);
+      return null;
+    }
+  }
+
+  async signup(name: string, email: string, password_raw: string): Promise<{ token: string; user: User } | null> {
+    try {
+      await api.post('/auth/register', {
+        name,
+        email,
+        password: password_raw,
+        role: 'REGULAR'
+      });
+
+      return this.login(email, password_raw);
+    } catch (error) {
+      console.error('Signup failed:', error);
+      return null;
+    }
   }
 
   logout() {
     localStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem(REFRESH_KEY);
   }
 
-  getCurrentUser(): User | null {
+  async getCurrentUser(): Promise<User | null> {
     const token = localStorage.getItem(AUTH_KEY);
     if (!token) return null;
 
     try {
-      const parts = token.split('.');
-      const payload = JSON.parse(this.base64Decode(parts[1]));
-
-      if (payload.exp < Math.floor(Date.now() / 1000)) {
-        this.logout();
-        return null;
-      }
-
-      const users = dbService.getUsers();
-      return users.find(u => u.id === payload.userId) || null;
+      const response = await api.get('/auth/me');
+      return this.mapUser(response.data);
     } catch (e) {
+      this.logout();
       return null;
     }
   }
 
   isAuthenticated(): boolean {
-    return !!this.getCurrentUser();
+    return !!localStorage.getItem(AUTH_KEY);
   }
 }
 

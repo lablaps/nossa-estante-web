@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { dbService } from '../services/dbService';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { Book } from '../types';
 
 const containerStyle = {
     width: '100%',
@@ -29,13 +30,31 @@ const mapOptions = {
 };
 
 const Explore: React.FC = () => {
-    const books = dbService.getBooks();
-    const [activeBook, setActiveBook] = useState(books[0]);
+    const [books, setBooks] = useState<Book[]>([]);
+    const [activeBook, setActiveBook] = useState<Book | null>(null);
+    const [loading, setLoading] = useState(true);
 
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: '' // Placeholder: User needs to add key or use dev mode (env var recommended)
     });
+
+    useEffect(() => {
+        const fetchBooks = async () => {
+            try {
+                const data = await dbService.getBooks();
+                setBooks(data);
+                if (data.length > 0) {
+                    setActiveBook(data[0]);
+                }
+            } catch (error) {
+                console.error('Error fetching books for explore:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchBooks();
+    }, []);
 
     // Mock coordinates generator around São Luís for demo purposes
     // In a real app, books would have real lat/lng
@@ -47,6 +66,16 @@ const Explore: React.FC = () => {
             lng: center.lng + radius * Math.sin(angle * Math.PI / 180)
         };
     }, [books.length]);
+
+    if (loading) {
+        return (
+            <Layout>
+                <div className="min-h-screen flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                </div>
+            </Layout>
+        );
+    }
 
     return (
         <Layout>

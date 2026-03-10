@@ -1,21 +1,51 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { dbService } from '../services/dbService';
 import { authService } from '../services/authService';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ReferenceButtons from '../components/ReferenceButtons';
+import { User, Book } from '../types';
 
 const Home: React.FC = () => {
-  const user = authService.getCurrentUser();
-  const books = dbService.getBooks();
+  const [user, setUser] = useState<User | null>(null);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock Activity Data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [userData, booksData] = await Promise.all([
+          authService.getCurrentUser(),
+          dbService.getBooks()
+        ]);
+        setUser(userData);
+        setBooks(booksData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Mock Activity Data (Keep for now unless there's an endpoint)
   const activities = [
     { id: 1, user: 'Ana', action: 'exchanged a book with', target: 'Miguel', time: '15 minutes ago', icon: 'swap_horiz', color: 'bg-green-100 text-green-700' },
     { id: 2, user: 'Lucas', action: 'added 3 new books', target: '', time: '1 hour ago', icon: 'add', color: 'bg-blue-100 text-blue-700' },
     { id: 3, user: 'Sarah', action: 'reviewed', target: 'Dune', time: '2 hours ago', icon: 'star', color: 'bg-yellow-100 text-yellow-700' },
   ];
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -89,9 +119,6 @@ const Home: React.FC = () => {
           </div>
         </header>
 
-        {/* Map Section */}
-
-
         {/* Books Near You */}
         <section className="pt-6 space-y-4">
           <div className="px-6 flex items-center justify-between">
@@ -106,9 +133,9 @@ const Home: React.FC = () => {
             {books.map((book) => (
               <Link to={`/livro/${book.id}`} key={book.id} className="w-[140px] flex-shrink-0 group">
                 <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-lg mb-3 bg-gray-100">
-                  <img src={book.photos[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={book.title} />
+                  <img src={book.photos?.[0] || 'https://picsum.photos/seed/book/200/300'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={book.title} />
                   <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-lg border border-white/10">
-                    <span className="text-[10px] font-bold text-white">{book.distance}</span>
+                    <span className="text-[10px] font-bold text-white">{book.distance || '0km'}</span>
                   </div>
                 </div>
                 <h3 className="font-bold text-sm truncate dark:text-white w-full">{book.title}</h3>

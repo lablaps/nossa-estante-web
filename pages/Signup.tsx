@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
@@ -18,7 +17,7 @@ const Signup: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const result = authService.signup(name, email, password, role);
+            const result = await authService.signup(name, email, password);
             if (result) {
                 navigate('/home');
             } else {
