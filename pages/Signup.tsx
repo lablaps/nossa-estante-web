@@ -3,13 +3,27 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
 
 const Signup: React.FC = () => {
+    const [step, setStep] = useState(1);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('REGULAR');
+    const [cpf, setCpf] = useState('');
+    const [phone, setPhone] = useState('');
+    const [birthDate, setBirthDate] = useState('');
+    const [address, setAddress] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
+
+    const handleNextStep = (e: React.FormEvent) => {
+        e.preventDefault();
+        setStep(prev => prev + 1);
+    };
+
+    const handleBackStep = () => {
+        setStep(prev => prev - 1);
+    };
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,7 +31,8 @@ const Signup: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const result = await authService.signup(name, email, password);
+            const data = { name, email, password_raw: password, role, cpf, phone, birthDate, address };
+            const result = await authService.signup(data);
             if (result) {
                 navigate('/home');
             } else {
@@ -57,90 +72,207 @@ const Signup: React.FC = () => {
 
             {/* Form Side */}
             <main className="flex-1 flex items-center justify-center p-6 sm:p-12">
-                <div className="w-full max-w-[440px] space-y-8 animate-fade-in">
-                    <div className="space-y-2 text-center lg:text-left">
-                        <h1 className="text-3xl font-extrabold text-text-main dark:text-white">Criar Conta</h1>
-                        <p className="text-text-muted dark:text-gray-400 font-medium">Comece a trocar seus livros agora mesmo</p>
+                <div className="w-full max-w-[640px] space-y-12 animate-fade-in">
+                    <div className="space-y-4 text-center">
+                        <h1 className="text-5xl font-extrabold text-text-main dark:text-white">Criar Conta</h1>
+                        <p className="text-text-muted dark:text-gray-400 font-medium text-2xl">Comece a trocar seus livros agora mesmo</p>
                     </div>
 
                     {error && <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-medium animate-shake">{error}</div>}
 
-                    <form className="space-y-5" onSubmit={handleSignup}>
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold dark:text-gray-300">Nome Completo</label>
-                            <div className="relative flex items-center">
-                                <span className="material-symbols-outlined absolute left-4 text-text-muted">person</span>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={e => setName(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border-0 ring-1 ring-black/10 dark:ring-white/10 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary outline-none text-text-main dark:text-white"
-                                    placeholder="Como prefere ser chamado?"
-                                    required
-                                />
+                    <form className="space-y-5" onSubmit={step < 3 ? handleNextStep : handleSignup}>
+                        <div className="w-full flex flex-col items-center mb-12">
+                            <div className="flex items-center justify-between w-3/4 relative z-0 mb-8 mt-4">
+                                <div className="absolute top-1/2 left-0 w-full h-2 bg-gray-200 dark:bg-gray-700 -translate-y-1/2 -z-10 rounded-full"></div>
+                                <div className="absolute top-1/2 left-0 h-2 bg-primary -translate-y-1/2 -z-10 transition-all duration-500 rounded-full" style={{ width: `${((step - 1) / 2) * 100}%` }}></div>
+                                
+                                <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl transition-all duration-300 ${step >= 1 ? 'bg-primary text-text-main ring-8 ring-primary/20 scale-110' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>1</div>
+                                <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl transition-all duration-300 ${step >= 2 ? 'bg-primary text-text-main ring-8 ring-primary/20 scale-110' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>2</div>
+                                <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl transition-all duration-300 ${step >= 3 ? 'bg-primary text-text-main ring-8 ring-primary/20 scale-110' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>3</div>
                             </div>
+                            <h3 className="text-2xl font-extrabold tracking-widest text-text-main dark:text-white uppercase transition-all duration-300">
+                                {step === 1 ? 'Dados de Conta' : step === 2 ? 'Informações Pessoais' : 'Contato & Endereço'}
+                            </h3>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold dark:text-gray-300">E-mail</label>
-                            <div className="relative flex items-center">
-                                <span className="material-symbols-outlined absolute left-4 text-text-muted">mail</span>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border-0 ring-1 ring-black/10 dark:ring-white/10 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary outline-none text-text-main dark:text-white"
-                                    placeholder="seu@exemplo.com"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold dark:text-gray-300">Senha</label>
-                                <div className="relative flex items-center">
-                                    <span className="material-symbols-outlined absolute left-4 text-text-muted">lock</span>
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3.5 rounded-xl border-0 ring-1 ring-black/10 dark:ring-white/10 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary outline-none text-text-main dark:text-white"
-                                        placeholder="••••••••"
-                                        required
-                                    />
+                        {step === 1 && (
+                            <div className="space-y-5 animate-fade-in flex flex-col items-center">
+                                <div className="space-y-3 w-full max-w-[560px]">
+                                    <label className="text-lg font-semibold dark:text-gray-300 ml-2">E-mail</label>
+                                    <div className="relative flex items-center">
+                                        <span className="material-symbols-outlined absolute left-6 text-primary text-3xl">mail</span>
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={e => setEmail(e.target.value)}
+                                            className="w-full pl-16 pr-6 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white transition-all"
+                                            placeholder="seu@exemplo.com"
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold dark:text-gray-300">Tipo de Perfil</label>
-                                <div className="relative flex items-center">
-                                    <span className="material-symbols-outlined absolute left-4 text-text-muted">badge</span>
-                                    <select
-                                        value={role}
-                                        onChange={e => setRole(e.target.value)}
-                                        className="w-full pl-12 pr-10 py-3.5 rounded-xl border-0 ring-1 ring-black/10 dark:ring-white/10 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary outline-none text-text-main dark:text-white appearance-none cursor-pointer font-medium"
-                                        required
+                                <div className="space-y-3 w-full max-w-[560px]">
+                                    <label className="text-lg font-semibold dark:text-gray-300 ml-2">Senha</label>
+                                    <div className="relative flex items-center">
+                                        <span className="material-symbols-outlined absolute left-6 text-primary text-3xl">lock</span>
+                                        <input
+                                            type="password"
+                                            value={password}
+                                            onChange={e => setPassword(e.target.value)}
+                                            className="w-full pl-16 pr-6 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white transition-all"
+                                            placeholder="••••••••"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3 w-full max-w-[560px]">
+                                    <label className="text-lg font-semibold dark:text-gray-300 ml-2">Tipo de Perfil</label>
+                                    <div className="relative flex items-center">
+                                        <span className="material-symbols-outlined absolute left-6 text-primary text-3xl">badge</span>
+                                        <select
+                                            value={role}
+                                            onChange={e => setRole(e.target.value)}
+                                            className="w-full pl-16 pr-14 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white appearance-none cursor-pointer font-medium transition-all"
+                                            required
+                                        >
+                                            <option value="REGULAR">Leitor</option>
+                                            <option value="COMPANY">Livraria/Sebo</option>
+                                            <option value="CANDIDATE">Estudante</option>
+                                        </select>
+                                        <span className="material-symbols-outlined absolute right-4 text-text-muted pointer-events-none">expand_more</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="w-full max-w-[560px] pt-8 flex justify-end">
+                                    <button
+                                        type="submit"
+                                        className="px-14 py-6 bg-primary hover:bg-[#0fd651] text-text-main font-extrabold text-2xl rounded-3xl shadow-xl shadow-primary/20 transition-all hover:translate-x-2 active:scale-[0.98] flex items-center justify-center gap-3"
                                     >
-                                        <option value="REGULAR">Leitor</option>
-                                        <option value="COMPANY">Livraria/Sebo</option>
-                                        <option value="CANDIDATE">Estudante</option>
-                                    </select>
-                                    <span className="material-symbols-outlined absolute right-4 text-text-muted pointer-events-none">expand_more</span>
+                                        Próximo <span className="material-symbols-outlined text-3xl">arrow_forward</span>
+                                    </button>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full py-4 bg-primary hover:bg-[#0fd651] text-text-main font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isLoading ? 'Criando conta...' : 'Criar Conta'}
-                        </button>
+                        {step === 2 && (
+                            <div className="space-y-5 animate-fade-in flex flex-col items-center">
+                                <div className="space-y-3 w-full max-w-[560px]">
+                                    <label className="text-lg font-semibold dark:text-gray-300 ml-2">Nome Completo</label>
+                                    <div className="relative flex items-center">
+                                        <span className="material-symbols-outlined absolute left-6 text-primary text-3xl">person</span>
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={e => setName(e.target.value)}
+                                            className="w-full pl-16 pr-6 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white transition-all"
+                                            placeholder="Como prefere ser chamado?"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3 w-full max-w-[560px]">
+                                    <label className="text-lg font-semibold dark:text-gray-300 ml-2">CPF</label>
+                                    <div className="relative flex items-center">
+                                        <span className="material-symbols-outlined absolute left-6 text-primary text-3xl">badge</span>
+                                        <input
+                                            type="text"
+                                            value={cpf}
+                                            onChange={e => setCpf(e.target.value)}
+                                            className="w-full pl-16 pr-6 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white transition-all"
+                                            placeholder="Somente números"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-3 w-full max-w-[560px]">
+                                    <label className="text-lg font-semibold dark:text-gray-300 ml-2">Data de Nascimento</label>
+                                    <div className="relative flex items-center">
+                                        <span className="material-symbols-outlined absolute left-6 text-primary text-3xl">calendar_today</span>
+                                        <input
+                                            type="date"
+                                            value={birthDate}
+                                            onChange={e => setBirthDate(e.target.value)}
+                                            className="w-full pl-16 pr-6 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white transition-all"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="w-full max-w-[560px] pt-8 flex justify-end gap-6">
+                                    <button
+                                        type="button"
+                                        onClick={handleBackStep}
+                                        className="flex-1 py-6 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-text-main dark:text-white font-bold text-xl rounded-3xl transition-all active:scale-[0.98] flex justify-center items-center gap-3"
+                                    >
+                                        <span className="material-symbols-outlined text-2xl">arrow_back</span> Voltar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-[2] py-6 bg-primary hover:bg-[#0fd651] text-text-main font-extrabold text-2xl rounded-3xl shadow-xl shadow-primary/20 transition-all hover:translate-x-2 active:scale-[0.98] flex items-center justify-center gap-3"
+                                    >
+                                        Próximo <span className="material-symbols-outlined text-3xl">arrow_forward</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 3 && (
+                            <div className="space-y-5 animate-fade-in flex flex-col items-center">
+                                <div className="space-y-3 w-full max-w-[560px]">
+                                    <label className="text-lg font-semibold dark:text-gray-300 ml-2">Telefone</label>
+                                    <div className="relative flex items-center">
+                                        <span className="material-symbols-outlined absolute left-6 text-primary text-3xl">phone</span>
+                                        <input
+                                            type="tel"
+                                            value={phone}
+                                            onChange={e => setPhone(e.target.value)}
+                                            className="w-full pl-16 pr-6 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white transition-all"
+                                            placeholder="(11) 99999-9999"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-3 w-full max-w-[560px]">
+                                    <label className="text-lg font-semibold dark:text-gray-300 ml-2">Endereço</label>
+                                    <div className="relative flex items-center">
+                                        <span className="material-symbols-outlined absolute left-6 text-primary text-3xl">home</span>
+                                        <input
+                                            type="text"
+                                            value={address}
+                                            onChange={e => setAddress(e.target.value)}
+                                            className="w-full pl-16 pr-6 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white transition-all"
+                                            placeholder="Rua ABC, 123"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-6 pt-8 w-full max-w-[560px]">
+                                    <button
+                                        type="button"
+                                        onClick={handleBackStep}
+                                        className="flex-1 py-6 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-text-main dark:text-white font-bold text-xl rounded-3xl transition-all active:scale-[0.98] flex justify-center items-center gap-3"
+                                    >
+                                        <span className="material-symbols-outlined text-2xl">arrow_back</span> Voltar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className="flex-[2] py-6 bg-primary hover:bg-[#0fd651] text-text-main font-extrabold text-2xl rounded-3xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+                                    >
+                                        {isLoading ? 'Criando...' : 'Concluir'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </form>
 
-                    <p className="text-center text-sm font-medium text-text-muted">
+                    <p className="text-center text-xl font-medium text-text-muted mt-8">
                         Já faz parte da comunidade? <Link to="/login" className="text-text-main dark:text-white font-bold hover:underline">Fazer Login</Link>
                     </p>
                 </div>

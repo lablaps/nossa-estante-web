@@ -7,6 +7,10 @@ export interface User {
   credits: number;
   avatar?: string;
   role?: string;
+  cpf?: string;
+  phone?: string;
+  birthDate?: string;
+  address?: string;
 }
 
 export type BookStatus = 'Available' | 'In Exchange' | 'Pending' | 'Exchanged';

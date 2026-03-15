@@ -48,59 +48,59 @@ const Login: React.FC = () => {
       </div>
 
       <main className="flex-1 flex items-center justify-center p-6 sm:p-12">
-        <div className="w-full max-w-[440px] space-y-8">
-          <div className="space-y-2 text-center lg:text-left">
-            <h1 className="text-3xl font-extrabold text-text-main dark:text-white">Bem-vindo(a)</h1>
-            <p className="text-text-muted dark:text-gray-400 font-medium">Entre para continuar trocando livros</p>
+        <div className="w-full max-w-[640px] space-y-12">
+          <div className="space-y-4 text-center">
+            <h1 className="text-5xl font-extrabold text-text-main dark:text-white">Bem-vindo(a)</h1>
+            <p className="text-text-muted dark:text-gray-400 font-medium text-2xl">Entre para continuar trocando livros</p>
           </div>
 
           {error && <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-medium">{error}</div>}
 
-          <form className="space-y-5" onSubmit={handleLogin}>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold dark:text-gray-300">E-mail</label>
+          <form className="space-y-8 flex flex-col items-center mx-auto max-w-[560px]" onSubmit={handleLogin}>
+            <div className="space-y-3 w-full">
+              <label className="text-lg font-semibold dark:text-gray-300 ml-2">E-mail</label>
               <div className="relative flex items-center">
-                <span className="material-symbols-outlined absolute left-4 text-text-muted">mail</span>
+                <span className="material-symbols-outlined absolute left-6 text-primary text-3xl">mail</span>
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border-0 ring-1 ring-black/10 dark:ring-white/10 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary outline-none text-text-main dark:text-white"
+                  className="w-full pl-16 pr-6 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white transition-all"
                   placeholder="nome@exemplo.com"
                   required
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-semibold dark:text-gray-300">Senha</label>
-                <a href="#" className="text-sm font-bold text-text-muted hover:text-primary">Esqueceu?</a>
+            <div className="space-y-3 w-full">
+              <div className="flex items-center justify-between mx-2">
+                <label className="text-lg font-semibold dark:text-gray-300">Senha</label>
+                <a href="#" className="text-lg font-bold text-text-muted hover:text-primary transition-colors">Esqueceu?</a>
               </div>
               <div className="relative flex items-center">
-                <span className="material-symbols-outlined absolute left-4 text-text-muted">lock</span>
+                <span className="material-symbols-outlined absolute left-6 text-primary text-3xl">lock</span>
                 <input
                   type="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3.5 rounded-xl border-0 ring-1 ring-black/10 dark:ring-white/10 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary outline-none text-text-main dark:text-white"
+                  className="w-full pl-16 pr-16 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white transition-all"
                   placeholder="••••••••"
                   required
                 />
-                <button type="button" className="absolute right-4 text-text-muted"><span className="material-symbols-outlined">visibility</span></button>
+                <button type="button" className="absolute right-6 text-text-muted hover:text-primary transition-colors"><span className="material-symbols-outlined text-3xl">visibility</span></button>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-primary hover:bg-[#0fd651] text-text-main font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full py-6 bg-primary hover:bg-[#0fd651] text-text-main font-extrabold text-2xl rounded-3xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 mt-4"
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
 
-          <p className="text-center text-sm font-medium text-text-muted">
+          <p className="text-center text-xl font-medium text-text-muted mt-8">
             Não tem uma conta? <Link to="/signup" className="text-text-main dark:text-white font-bold hover:underline">Cadastre-se</Link>
           </p>
         </div>

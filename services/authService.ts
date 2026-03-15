@@ -13,7 +13,11 @@ class AuthService {
       reputation: u.reputation || 5.0,
       credits: u.credits || 0,
       avatar: u.avatar || `https://picsum.photos/seed/${u.id}/200`,
-      role: u.role
+      role: u.role,
+      cpf: u.cpf,
+      phone: u.phone,
+      birthDate: u.birthDate,
+      address: u.address
     };
   }
 
@@ -38,16 +42,20 @@ class AuthService {
     }
   }
 
-  async signup(name: string, email: string, password_raw: string): Promise<{ token: string; user: User } | null> {
+  async signup(data: { name: string; email: string; password_raw: string; role: string; cpf?: string; phone?: string; birthDate?: string; address?: string }): Promise<{ token: string; user: User } | null> {
     try {
       await api.post('/auth/register', {
-        name,
-        email,
-        password: password_raw,
-        role: 'REGULAR'
+        name: data.name,
+        email: data.email,
+        password: data.password_raw,
+        role: data.role,
+        cpf: data.cpf,
+        phone: data.phone,
+        birthDate: data.birthDate,
+        address: data.address
       });
 
-      return this.login(email, password_raw);
+      return this.login(data.email, data.password_raw);
     } catch (error) {
       console.error('Signup failed:', error);
       return null;
