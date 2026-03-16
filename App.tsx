@@ -11,6 +11,7 @@ import BookDetails from './pages/BookDetails';
 import Chat from './pages/Chat';
 import Wallet from './pages/Wallet';
 import Signup from './pages/Signup';
+import Profile from './pages/Profile';
 import { authService } from './services/authService';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -44,6 +45,7 @@ const App: React.FC = () => {
       <Route path="/chat/:tradeId" element={<PrivateRoute><Chat /></PrivateRoute>} />
       <Route path="/chats" element={<PrivateRoute><Chat tradeId="mock" /></PrivateRoute>} />
       <Route path="/carteira" element={<PrivateRoute><Wallet /></PrivateRoute>} />
+      <Route path="/meu-perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

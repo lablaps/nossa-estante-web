@@ -5,11 +5,68 @@ import { authService } from '../services/authService';
 import Layout from '../components/Layout';
 import { Book, BookCondition, User } from '../types';
 import ReferenceButtons from '../components/ReferenceButtons';
+import { bookService } from '../services/bookService';
+
+const FormField: React.FC<{ label: string, icon?: string, value: string, placeholder?: string, type?: string, onChange: (val: string) => void, required?: boolean, extra?: React.ReactNode }> = ({ label, icon, value, placeholder, type = "text", onChange, required, extra }) => (
+  <div className="space-y-2">
+    <div className="flex items-center justify-between px-2">
+      <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">{label}</span>
+      {extra}
+    </div>
+    <div className="relative flex items-center group">
+      {icon && (
+        <span className="material-symbols-outlined absolute left-4 text-primary group-focus-within:text-primary-dark transition-colors z-10">
+          {icon}
+        </span>
+      )}
+      {type === 'textarea' ? (
+        <textarea
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          required={required}
+          className="w-full px-5 py-4 rounded-3xl bg-white dark:bg-surface-dark dark:text-white focus:ring-4 focus:ring-primary/20 border border-black/5 dark:border-white/5 shadow-sm placeholder:text-text-muted/40 font-bold min-h-[120px] resize-none text-sm transition-all"
+        />
+      ) : (
+        <input
+          type={type}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          required={required}
+          className={`w-full ${icon ? 'pl-12' : 'px-5'} pr-4 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-4 focus:ring-primary/20 border border-black/5 dark:border-white/5 shadow-sm placeholder:text-text-muted/50 font-bold transition-all outline-none`}
+        />
+      )}
+    </div>
+  </div>
+);
+
+const SelectField: React.FC<{ label: string, value: string, options: string[], onChange: (val: string) => void }> = ({ label, value, options, onChange }) => (
+  <div className="space-y-2">
+    <div className="px-2">
+      <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">{label}</span>
+    </div>
+    <div className="relative flex items-center group">
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-full px-5 py-4 pr-12 rounded-2xl bg-white dark:bg-surface-dark dark:text-white border border-black/5 dark:border-white/5 shadow-sm font-bold text-sm appearance-none focus:ring-4 focus:ring-primary/20 outline-none transition-all cursor-pointer relative z-10"
+        style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
+      >
+        {options.map(opt => <option key={opt} className="dark:bg-surface-dark">{opt}</option>)}
+      </select>
+      <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none group-focus-within:translate-y-[-70%] transition-transform z-20">
+        expand_more
+      </span>
+    </div>
+  </div>
+);
 
 const AddBook: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFetchingBook, setIsFetchingBook] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -36,6 +93,50 @@ const AddBook: React.FC = () => {
     };
     fetchUser();
   }, []);
+
+  const handleISBNChange = async (isbn: string) => {
+    setFormData(prev => ({ ...prev, isbn }));
+
+    // Auto-fetch if ISBN looks complete (10 or 13 chars)
+    const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+    if ((cleanIsbn.length === 10 || cleanIsbn.length === 13) && !isFetchingBook) {
+      setIsFetchingBook(true);
+      try {
+        const bookInfo = await bookService.fetchBookByISBN(cleanIsbn);
+        if (bookInfo) {
+          setFormData(prev => {
+            const categoryMap: Record<string, string> = {
+              'Fiction': 'Ficção',
+              'Non-fiction': 'Não-Ficção',
+              'Self-help': 'Autoajuda',
+              'Business': 'Negócios',
+              'Juvenile fiction': 'Infantil',
+              'Fantasy': 'Fantasia',
+              'Horror': 'Terror',
+              'Romance': 'Romance'
+            };
+            
+            const primaryCat = bookInfo.categories?.[0] || '';
+            const mappedGender = categoryMap[primaryCat] || (primaryCat.toLowerCase().includes('fiction') ? 'Ficção' : (primaryCat ? 'Não-Ficção' : prev.gender));
+
+            return {
+              ...prev,
+              title: bookInfo.title || prev.title,
+              author: bookInfo.authors.join(', ') || prev.author,
+              pages: bookInfo.pageCount?.toString() || prev.pages,
+              synopsis: bookInfo.description || prev.synopsis,
+              gender: mappedGender,
+              language: bookInfo.language === 'en' ? 'Inglês' : (bookInfo.language === 'pt' ? 'Português' : prev.language)
+            };
+          });
+        }
+      } catch (error) {
+        console.error('Dynamic lookup failed:', error);
+      } finally {
+        setIsFetchingBook(false);
+      }
+    }
+  };
 
   const conditionLabels: Record<BookCondition, string> = {
     'New': 'Novo',
@@ -108,122 +209,99 @@ const AddBook: React.FC = () => {
           <div className="w-10"></div>
         </header>
 
-        <form onSubmit={handleSubmit} className="px-6 pt-8 space-y-8 max-w-2xl mx-auto w-full">
-          {/* Scan Section */}
-          <div className="bg-surface-dark/40 rounded-[24px] p-4 flex items-center justify-between border border-white/5">
-            <div className="flex items-center gap-4">
-              <div className="size-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary">
-                <span className="material-symbols-outlined filled">barcode_scanner</span>
-              </div>
-              <div>
-                <p className="text-white text-sm font-bold">Escanear ISBN</p>
-                <p className="text-text-muted text-[10px] font-bold uppercase tracking-wider">Preenchimento Automático</p>
-              </div>
-            </div>
-            <button type="button" className="bg-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition-transform">
-              Abrir Câmera
-            </button>
+        <form onSubmit={handleSubmit} className="px-6 pt-8 space-y-10 max-w-2xl mx-auto w-full relative z-10">
+          {/* Header Info */}
+          <div className="flex justify-between items-center mb-2 px-1 text-text-muted font-black text-[10px] uppercase tracking-[0.2em]">
+            <span>Informações do Livro</span>
+            <span className="text-primary">Etapa 1 de 1</span>
           </div>
 
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <label className="block space-y-2">
-                <span className="text-sm font-bold dark:text-white">Título</span>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={e => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="ex: O Alquimista"
-                  className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-2 focus:ring-primary border-0 shadow-sm placeholder:text-text-muted/50 font-medium"
-                  required
-                />
-              </label>
-
-              <label className="block space-y-2">
-                <span className="text-sm font-bold dark:text-white">Autor</span>
-                <input
-                  type="text"
-                  value={formData.author}
-                  onChange={e => setFormData({ ...formData, author: e.target.value })}
-                  placeholder="ex: Paulo Coelho"
-                  className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-2 focus:ring-primary border-0 shadow-sm placeholder:text-text-muted/50 font-medium"
-                  required
-                />
-              </label>
-
-              <div className="grid grid-cols-2 gap-4">
-                <label className="block space-y-2">
-                  <span className="text-sm font-bold dark:text-white">Gênero</span>
-                  <div className="relative">
-                    <select
-                      value={formData.gender}
-                      onChange={e => setFormData({ ...formData, gender: e.target.value })}
-                      className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white border-0 shadow-sm font-bold text-sm appearance-none"
-                    >
-                      <option>Ficção</option>
-                      <option>Não-Ficção</option>
-                      <option>Autoajuda</option>
-                      <option>Negócios</option>
-                      <option>Infantil</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">expand_more</span>
-                  </div>
-                </label>
-                <label className="block space-y-2">
-                  <span className="text-sm font-bold dark:text-white">Páginas</span>
-                  <input
-                    type="number"
-                    value={formData.pages}
-                    onChange={e => setFormData({ ...formData, pages: e.target.value })}
-                    placeholder="ex: 250"
-                    className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-2 focus:ring-primary border-0 shadow-sm placeholder:text-text-muted/50 font-medium"
-                    required
-                  />
-                </label>
+          {/* ISBN Section */}
+          <FormField
+            label="ISBN (Preenchimento Automático)"
+            icon="barcode"
+            value={formData.isbn}
+            onChange={handleISBNChange}
+            placeholder="Digite o código ISBN (ex: 9780132350884)"
+            extra={isFetchingBook && (
+              <div className="flex items-center gap-2 text-primary animate-pulse">
+                <div className="size-3 border-2 border-primary/30 border-t-primary animate-spin rounded-full"></div>
+                <span className="text-[10px] font-black uppercase tracking-widest">Buscando...</span>
               </div>
+            )}
+          />
 
-              <div className="grid grid-cols-2 gap-4">
-                <label className="block space-y-2">
-                  <span className="text-sm font-bold dark:text-white">Idioma</span>
-                  <div className="relative">
-                    <select
-                      value={formData.language}
-                      onChange={e => setFormData({ ...formData, language: e.target.value })}
-                      className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white border-0 shadow-sm font-bold text-sm appearance-none"
-                    >
-                      <option>Português</option>
-                      <option>Inglês</option>
-                      <option>Espanhol</option>
-                      <option>Francês</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">expand_more</span>
-                  </div>
-                </label>
-                <label className="block space-y-2">
-                  <span className="text-sm font-bold dark:text-white">Custo (Créditos)</span>
-                  <input
-                    type="number"
-                    value={formData.cost}
-                    onChange={e => setFormData({ ...formData, cost: parseInt(e.target.value) })}
-                    className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-2 focus:ring-primary border-0 shadow-sm font-medium"
-                    min="1"
+          <div className="space-y-6">
+            <div className="space-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <FormField
+                    label="Título da Obra"
+                    value={formData.title}
+                    onChange={val => setFormData({ ...formData, title: val })}
+                    placeholder="ex: O Alquimista"
                     required
                   />
-                </label>
+                </div>
+
+                <FormField
+                  label="Autor(es)"
+                  value={formData.author}
+                  onChange={val => setFormData({ ...formData, author: val })}
+                  placeholder="ex: Paulo Coelho"
+                  required
+                />
+
+                <FormField
+                  label="Gênero Principal"
+                  icon="category"
+                  value={formData.gender}
+                  onChange={val => setFormData({ ...formData, gender: val })}
+                  placeholder="ex: Ficção, Biografia..."
+                  required
+                />
+
+                <FormField
+                  label="Número de Páginas"
+                  type="number"
+                  value={formData.pages}
+                  onChange={val => setFormData({ ...formData, pages: val })}
+                  placeholder="ex: 250"
+                  required
+                />
+
+                <FormField
+                  label="Idioma"
+                  icon="language"
+                  value={formData.language}
+                  onChange={val => setFormData({ ...formData, language: val })}
+                  placeholder="ex: Português"
+                  required
+                />
+
+                <FormField
+                  label="Custo da Troca (Créditos)"
+                  type="number"
+                  value={formData.cost.toString()}
+                  onChange={val => setFormData({ ...formData, cost: parseInt(val) || 1 })}
+                  required
+                />
               </div>
             </div>
 
             {/* Condition Segmented Control */}
-            <div className="space-y-3">
-              <span className="text-sm font-bold dark:text-white">Condição</span>
-              <div className="bg-white dark:bg-surface-dark rounded-[24px] p-1 flex gap-1 shadow-sm overflow-x-auto no-scrollbar border border-black/5 dark:border-white/5">
+            <div className="space-y-4">
+              <div className="px-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Estado de Conservação</span>
+              </div>
+              <div className="bg-white dark:bg-surface-dark rounded-[28px] p-1.5 flex gap-1 shadow-sm border border-black/5 dark:border-white/5 overflow-hidden">
                 {(['New', 'Very Good', 'Good', 'Used'] as BookCondition[]).map((cond) => (
                   <button
                     key={cond}
                     type="button"
                     onClick={() => setFormData({ ...formData, condition: cond })}
-                    className={`flex-1 py-3 px-2 rounded-[20px] text-xs font-bold transition-all whitespace-nowrap ${formData.condition === cond
-                      ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                    className={`flex-1 py-4 px-2 rounded-[22px] text-[10px] font-black uppercase tracking-widest transition-all ${formData.condition === cond
+                      ? 'bg-primary text-black shadow-lg shadow-primary/20 scale-[1.02]'
                       : 'text-text-muted hover:bg-black/5 dark:hover:bg-white/5'
                       }`}
                   >
@@ -231,58 +309,60 @@ const AddBook: React.FC = () => {
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-text-muted font-bold ml-1">
+              <p className="text-[10px] text-text-muted font-bold px-2 flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">info</span>
                 {conditionDescriptions[formData.condition]}
               </p>
             </div>
 
             {/* Photo Upload Slots */}
-            <div className="space-y-3">
-              <span className="text-sm font-bold dark:text-white">Fotos Reais do Livro</span>
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                <button type="button" className="shrink-0 size-24 rounded-2xl border-2 border-primary border-dashed bg-primary/5 flex flex-col items-center justify-center text-primary group active:scale-95 transition-all">
+            <div className="space-y-4">
+              <div className="px-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Aparência do Livro</span>
+              </div>
+              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                <button type="button" className="shrink-0 size-28 rounded-3xl border-2 border-primary border-dashed bg-primary/5 flex flex-col items-center justify-center text-primary group active:scale-95 transition-all shadow-sm">
                   <span className="material-symbols-outlined text-4xl">add_a_photo</span>
+                  <span className="text-[9px] font-black uppercase mt-1">Adicionar</span>
                 </button>
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="shrink-0 size-24 rounded-2xl bg-white dark:bg-surface-dark flex items-center justify-center text-text-muted/30 border border-black/5 dark:border-white/5 shadow-sm">
-                    <span className="material-symbols-outlined text-3xl">image</span>
+                  <div key={i} className="shrink-0 size-28 rounded-3xl bg-white dark:bg-surface-dark flex items-center justify-center text-text-muted/20 border border-black/5 dark:border-white/5 shadow-sm">
+                    <span className="material-symbols-outlined text-4xl">inventory_2</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <label className="block space-y-2">
-              <div className="flex justify-between items-center px-1">
-                <span className="text-sm font-bold dark:text-white">Observações do Proprietário</span>
-                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Opcional</span>
-              </div>
-              <textarea
+            <div className="grid grid-cols-1 gap-10">
+              <FormField
+                label="Observações do Proprietário"
+                type="textarea"
                 value={formData.ownerNotes}
-                onChange={e => setFormData({ ...formData, ownerNotes: e.target.value })}
+                onChange={val => setFormData({ ...formData, ownerNotes: val })}
                 placeholder="Mencione marcas, grifos ou danos..."
-                className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-2 focus:ring-primary border-0 shadow-sm placeholder:text-text-muted/40 font-medium min-h-[100px] resize-none text-sm"
+                extra={<span className="text-[9px] font-black text-text-muted uppercase tracking-widest">Opcional</span>}
               />
-            </label>
 
-            <label className="block space-y-2">
-              <span className="text-sm font-bold dark:text-white">Sinopse</span>
-              <textarea
+              <FormField
+                label="Sinopse do Livro"
+                type="textarea"
                 value={formData.synopsis}
-                onChange={e => setFormData({ ...formData, synopsis: e.target.value })}
-                placeholder="Digite a descrição do livro..."
-                className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-2 focus:ring-primary border-0 shadow-sm placeholder:text-text-muted/40 font-medium min-h-[120px] resize-none text-sm"
+                onChange={val => setFormData({ ...formData, synopsis: val })}
+                placeholder="Uma breve descrição da história ou conteúdo..."
                 required
               />
-            </label>
+            </div>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-8 mb-12">
             <button
               type="submit"
-              className="w-full py-5 bg-primary text-text-main font-black rounded-3xl shadow-xl shadow-primary/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all text-lg"
+              className="w-full py-5 bg-primary hover:bg-[#0fd651] text-text-main font-black rounded-[32px] shadow-2xl shadow-primary/20 flex items-center justify-center gap-4 active:scale-[0.98] transition-all text-xl"
             >
-              <span className="material-symbols-outlined filled">add_circle</span>
-              Adicionar à Minha Estante
+              <div className="size-8 bg-black/10 rounded-full flex items-center justify-center">
+                <span className="material-symbols-outlined filled text-xl">library_add</span>
+              </div>
+              Registrar na Minha Estante
             </button>
           </div>
         </form>

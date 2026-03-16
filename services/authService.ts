@@ -80,6 +80,25 @@ class AuthService {
     }
   }
 
+  async updateProfile(data: Partial<User>): Promise<User | null> {
+    try {
+      const response = await api.put('/auth/me', {
+        name: data.name,
+        email: data.email,
+        cpf: data.cpf,
+        phone: data.phone,
+        birthDate: data.birthDate,
+        address: data.address,
+        role: data.role,
+        password: 'REDACTED' // Backend UserRequest requires password at the moment, but the update endpoint doesn't actually use it for updating. I should check if I can make it optional on backend.
+      });
+      return this.mapUser(response.data);
+    } catch (error) {
+      console.error('Update profile failed:', error);
+      return null;
+    }
+  }
+
   isAuthenticated(): boolean {
     return !!localStorage.getItem(AUTH_KEY);
   }

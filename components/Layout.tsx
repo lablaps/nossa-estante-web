@@ -26,7 +26,8 @@ const Layout: React.FC<{ children: React.ReactNode; hideBottomNav?: boolean }> =
     { path: '/explore', icon: 'map', label: 'Explore' },
     { path: '/cadastrar-livro', icon: 'add', label: 'Add Book' }, // Placeholder for logic
     { path: '/chats', icon: 'chat_bubble', label: 'Chats' },
-    { path: '/minha-estante', icon: 'person', label: 'Profile' },
+    { path: '/minha-estante', icon: 'auto_stories', label: 'Minha Estante' },
+    { path: '/meu-perfil', icon: 'person', label: 'Meu Perfil' },
   ];
 
   if (!user) return null;
@@ -103,8 +104,13 @@ const Layout: React.FC<{ children: React.ReactNode; hideBottomNav?: boolean }> =
             </NavLink>
 
             <NavLink to="/minha-estante" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-text-muted'}`}>
-              <span className={`material-symbols-outlined text-[26px] ${location.pathname === '/minha-estante' ? 'filled' : ''}`}>person</span>
-              <span className="text-[10px] font-bold">Profile</span>
+              <span className={`material-symbols-outlined text-[26px] ${location.pathname === '/minha-estante' ? 'filled' : ''}`}>auto_stories</span>
+              <span className="text-[10px] font-bold">Minha Estante</span>
+            </NavLink>
+
+            <NavLink to="/meu-perfil" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-text-muted'}`}>
+              <span className={`material-symbols-outlined text-[26px] ${location.pathname === '/meu-perfil' ? 'filled' : ''}`}>person</span>
+              <span className="text-[10px] font-bold">Meu Perfil</span>
             </NavLink>
 
           </nav>
