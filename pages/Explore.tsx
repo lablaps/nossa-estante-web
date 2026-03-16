@@ -2,13 +2,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { dbService } from '../services/dbService';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import MapLibre from '../components/MapLibre';
 import { Book } from '../types';
-
-const containerStyle = {
-    width: '100%',
-    height: '100%'
-};
 
 // São Luís, Maranhão Coordinates
 const center = {
@@ -16,28 +11,10 @@ const center = {
     lng: -44.3068
 };
 
-// Custom styles to remove POIs for cleaner look (optional)
-const mapOptions = {
-    disableDefaultUI: true,
-    zoomControl: false,
-    styles: [
-        {
-            featureType: "poi",
-            elementType: "labels",
-            stylers: [{ visibility: "off" }]
-        }
-    ]
-};
-
 const Explore: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
     const [activeBook, setActiveBook] = useState<Book | null>(null);
     const [loading, setLoading] = useState(true);
-
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: '' // Placeholder: User needs to add key or use dev mode (env var recommended)
-    });
 
     useEffect(() => {
         const fetchBooks = async () => {
@@ -57,10 +34,9 @@ const Explore: React.FC = () => {
     }, []);
 
     // Mock coordinates generator around São Luís for demo purposes
-    // In a real app, books would have real lat/lng
     const getBookPosition = useCallback((index: number) => {
         const angle = index * (360 / books.length);
-        const radius = 0.01 + (index % 2 === 0 ? 0.005 : 0); // ~1-2km spread
+        const radius = 0.01 + (index % 2 === 0 ? 0.005 : 0);
         return {
             lat: center.lat + radius * Math.cos(angle * Math.PI / 180),
             lng: center.lng + radius * Math.sin(angle * Math.PI / 180)
@@ -76,6 +52,12 @@ const Explore: React.FC = () => {
             </Layout>
         );
     }
+
+    const markerPoints = books.map((book, i) => ({
+        id: book.id,
+        ...getBookPosition(i),
+        label: book.creditsCost.toString()
+    }));
 
     return (
         <Layout>
@@ -105,36 +87,18 @@ const Explore: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Mapa Google Maps */}
+                {/* Mapa MapLibre (Substituindo Google Maps) */}
                 <div className="absolute inset-0 z-0">
-                    {isLoaded ? (
-                        <GoogleMap
-                            mapContainerStyle={containerStyle}
-                            center={center}
-                            zoom={13}
-                            options={mapOptions}
-                        >
-                            {books.map((book, i) => (
-                                <Marker
-                                    key={book.id}
-                                    position={getBookPosition(i)}
-                                    // Use standard marker or custom icon if available
-                                    // icon={book.photos[0]} // Using photo as icon requires scaling, keeping default for now or using label
-                                    label={{
-                                        text: book.creditsCost.toString(),
-                                        color: "white",
-                                        fontWeight: "bold",
-                                        className: "map-marker-label"
-                                    }}
-                                    onClick={() => setActiveBook(book)}
-                                />
-                            ))}
-                        </GoogleMap>
-                    ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                            <p className="text-text-muted font-bold">Loading Maps...</p>
-                        </div>
-                    )}
+                    <MapLibre 
+                        lat={center.lat} 
+                        lng={center.lng} 
+                        zoom={13}
+                        markers={markerPoints}
+                        onMarkerClick={(point) => {
+                            const foundBook = books.find(b => b.id === point.id);
+                            if (foundBook) setActiveBook(foundBook);
+                        }}
+                    />
                 </div>
 
                 {/* Card do Livro Selecionado (Bottom Sheet style) */}

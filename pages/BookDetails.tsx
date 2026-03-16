@@ -5,6 +5,7 @@ import { authService } from '../services/authService';
 import Layout from '../components/Layout';
 import ReferenceButtons from '../components/ReferenceButtons';
 import { Book, User } from '../types';
+import MapLibre from '../components/MapLibre';
 
 const BookDetails: React.FC = () => {
   const { id } = useParams();
@@ -178,14 +179,12 @@ const BookDetails: React.FC = () => {
                     <h3 className="text-sm font-black dark:text-white uppercase tracking-[0.2em] opacity-40">Localização</h3>
                     <span className="text-[10px] font-bold text-primary">Ponto de Segurança Disponível</span>
                   </div>
-                  <div className="h-40 bg-gray-200 dark:bg-surface-dark rounded-3xl overflow-hidden relative border border-black/5 dark:border-white/5 group shadow-inner">
-                    <img 
-                      src="https://picsum.photos/seed/map_loc/800/400" 
-                      className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-1000" 
-                      alt="Mapa" 
+                  <div className="h-48 bg-gray-200 dark:bg-surface-dark rounded-3xl overflow-hidden relative border border-black/5 dark:border-white/5 group shadow-inner">
+                    <MapLibre 
+                      lat={book.latitude || -23.5505} 
+                      lng={book.longitude || -46.6333} 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-md p-3 rounded-2xl shadow-xl flex items-center gap-3">
+                    <div className="absolute bottom-4 left-4 right-4 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-md p-3 rounded-2xl shadow-xl flex items-center gap-3 z-10">
                       <div className="p-2 bg-primary/20 text-primary rounded-lg">
                         <span className="material-symbols-outlined text-sm">shield</span>
                       </div>
