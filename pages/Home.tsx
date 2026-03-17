@@ -4,12 +4,55 @@ import { authService } from '../services/authService';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ReferenceButtons from '../components/ReferenceButtons';
+import TutorialOverlay from '../components/TutorialOverlay';
 import { User, Book } from '../types';
+import { Step } from 'react-joyride';
+
+const TUTORIAL_STEPS: Step[] = [
+  {
+    target: window.innerWidth > 768 ? '#nav-home' : '#nav-home-mobile',
+    title: '🏠 Dashboard Inicial',
+    content: 'Aqui você tem uma visão geral dos livros disponíveis, seus créditos e as atividades recentes da comunidade.',
+    disableBeacon: true,
+    placement: 'right',
+  },
+  {
+    target: window.innerWidth > 768 ? '#nav-explore' : '#nav-explore-mobile',
+    title: '🗺️ Exploração no Mapa',
+    content: 'Encontre livros disponíveis para troca perto de você usando nosso mapa interativo.',
+    placement: 'right',
+  },
+  {
+    target: window.innerWidth > 768 ? '#nav-cadastrar-livro-mobile' : '#nav-cadastrar-livro-mobile', // Central button on mobile
+    title: '➕ Adicionar Livro',
+    content: 'Compartilhe seus próprios livros com a comunidade. Ao cadastrar um livro, você ganha visibilidade e créditos!',
+    placement: 'top',
+  },
+  {
+    target: window.innerWidth > 768 ? '#nav-chats' : '#nav-chats-mobile',
+    title: '💬 Conversas',
+    content: 'Combine as trocas diretamente com outros leitores através do nosso chat interno.',
+    placement: 'right',
+  },
+  {
+    target: window.innerWidth > 768 ? '#nav-minha-estante' : '#nav-minha-estante-mobile',
+    title: '📚 Minha Estante',
+    content: 'Gerencie seus livros cadastrados, acompanhe suas trocas e organize sua coleção pessoal.',
+    placement: 'right',
+  },
+  {
+    target: window.innerWidth > 768 ? '#nav-meu-perfil' : '#nav-meu-perfil-mobile',
+    title: '👤 Seu Perfil',
+    content: 'Acesse suas configurações, veja sua reputação na comunidade e acompanhe seu histórico.',
+    placement: 'right',
+  },
+];
 
 const Home: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,6 +63,9 @@ const Home: React.FC = () => {
         ]);
         setUser(userData);
         setBooks(booksData);
+        if (userData?.isFirstAccess) {
+          setTimeout(() => setShowTutorial(true), 600);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -51,6 +97,15 @@ const Home: React.FC = () => {
     <Layout>
       <ReferenceButtons pngUrl="https://picsum.photos/400/800" />
 
+      {showTutorial && (
+        <TutorialOverlay
+          steps={TUTORIAL_STEPS}
+          onFinish={() => {
+            setShowTutorial(false);
+          }}
+        />
+      )}
+
       <div className="min-h-screen bg-[#F8FAF9] dark:bg-background-dark pb-32">
         {/* Header Section */}
         <header className="px-6 pt-8 pb-4 space-y-4">
@@ -62,7 +117,7 @@ const Home: React.FC = () => {
                 <p className="text-sm font-black dark:text-white">{user?.name || 'Reader'}</p>
               </div>
             </div>
-            <div className="bg-primary/10 px-3 py-1.5 rounded-full flex items-center gap-2">
+            <div id="home-credits" className="bg-primary/10 px-3 py-1.5 rounded-full flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-sm filled">token</span>
               <span className="text-xs font-black text-primary">{user?.credits || 0} Credits</span>
             </div>
@@ -89,7 +144,7 @@ const Home: React.FC = () => {
           </div>
 
           {/* Search Bar */}
-          <div className="flex gap-3">
+          <div id="home-search-bar" className="flex gap-3">
             <div className="flex-1 relative">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">search</span>
               <input
@@ -104,7 +159,7 @@ const Home: React.FC = () => {
           </div>
 
           {/* Categories */}
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pt-2">
+          <div id="home-categories" className="flex gap-2 overflow-x-auto no-scrollbar pt-2">
             {['Near me', 'Fiction', 'Biographies', 'Sci-Fi', 'Romance', 'Mystery'].map((cat, i) => (
               <button
                 key={i}
@@ -120,7 +175,7 @@ const Home: React.FC = () => {
         </header>
 
         {/* Books Near You */}
-        <section className="pt-6 space-y-4">
+        <section id="home-books-near" className="pt-6 space-y-4">
           <div className="px-6 flex items-center justify-between">
             <h2 className="text-lg font-black dark:text-white flex items-center gap-2">
               Books Near You
@@ -150,7 +205,7 @@ const Home: React.FC = () => {
         </section>
 
         {/* Community Activity */}
-        <section className="px-6 pt-4 space-y-4">
+        <section id="home-community" className="px-6 pt-4 space-y-4">
           <h2 className="text-lg font-black dark:text-white">Community Activity</h2>
           <div className="space-y-3">
             {activities.map((item) => (

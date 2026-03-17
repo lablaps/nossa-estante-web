@@ -17,7 +17,8 @@ class AuthService {
       cpf: u.cpf,
       phone: u.phone,
       birthDate: u.birthDate,
-      address: u.address
+      address: u.address,
+      isFirstAccess: u.isFirstAccess ?? true
     };
   }
 
@@ -95,6 +96,18 @@ class AuthService {
       return this.mapUser(response.data);
     } catch (error) {
       console.error('Update profile failed:', error);
+      return null;
+    }
+  }
+
+  async finishTutorial(): Promise<User | null> {
+    console.log('[AuthService] Iniciando finishTutorial...');
+    try {
+      const response = await api.patch('/auth/me/finish-tutorial');
+      console.log('[AuthService] Resposta da API:', response.data);
+      return this.mapUser(response.data);
+    } catch (error) {
+      console.error('[AuthService] Erro na requisição PATCH:', error);
       return null;
     }
   }

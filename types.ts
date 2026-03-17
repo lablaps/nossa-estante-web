@@ -11,6 +11,7 @@ export interface User {
   phone?: string;
   birthDate?: string;
   address?: string;
+  isFirstAccess?: boolean;
 }
 
 export type BookStatus = 'Available' | 'In Exchange' | 'Pending' | 'Exchanged';
