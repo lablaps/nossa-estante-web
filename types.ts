@@ -21,7 +21,8 @@ export interface Book {
   id: string;
   title: string;
   author: string;
-  isbn: string;
+  isbn10?: string;
+  isbn13?: string;
   category: string;
   language: string;
   ownerId: string;
@@ -33,6 +34,14 @@ export interface Book {
   photos: string[];
   synopsis: string;
   ownerNotes?: string;
+  coverURL?: string;
+  pageCount?: number;
+  publisher?: string;
+  publishedDate?: string;
+  edition?: string;
+  physicalFormat?: string;
+  publishPlace?: string;
+  contributors?: string[];
 }
 
 export interface Transaction {
@@ -70,13 +79,22 @@ export interface Trade {
 }
 
 export interface BookRequestDTO {
-  isbn: string;
-  material_state: string;
-  status: string;
-  cost: number;
   title: string;
   author: string;
+  coverURL?: string;
+  synopses?: string;
+  pageCount?: number;
+  publisher?: string;
+  publishedDate?: string;
+  isbn10?: string;
+  isbn13?: string;
+  language?: string;
+  edition?: string;
+  material_state: string;
+  physicalFormat?: string;
+  publishPlace?: string;
+  status: string;
+  cost: number;
   gender: string;
-  pages: string;
-  synopses: string;
+  contributors?: string[];
 }

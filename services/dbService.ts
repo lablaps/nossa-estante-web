@@ -1,5 +1,6 @@
 import api from './api';
-import { User, Book, Transaction, Trade, Chat } from '../types';
+import { User, Book, Transaction, Trade, Chat, BookRequestDTO } from '../types';
+
 
 class DBService {
   // Users
@@ -18,7 +19,8 @@ class DBService {
       id: b.id?.toString() || '',
       title: b.title || 'Untitled',
       author: b.author || 'Unknown Author',
-      isbn: b.isbn || '',
+      isbn10: b.isbn10 || '',
+      isbn13: b.isbn13 || '',
       category: b.gender || 'General',
       language: b.language || 'Portuguese',
       ownerId: b.userId?.toString() || b.user || '',
@@ -29,7 +31,15 @@ class DBService {
       distance: '1.2km', // Mock for now
       photos: (b.photos && b.photos.length > 0) ? b.photos : [`https://picsum.photos/seed/${b.id || Math.random()}/400/600`],
       synopsis: b.synopses || b.synopsis || '',
-      ownerNotes: b.notes || ''
+      ownerNotes: b.notes || '',
+      coverURL: b.coverURL || '',
+      pageCount: b.pageCount || 0,
+      publisher: b.publisher || '',
+      publishedDate: b.publishedDate || '',
+      edition: b.edition || '',
+      physicalFormat: b.physicalFormat || '',
+      publishPlace: b.publishPlace || '',
+      contributors: b.contributors || []
     };
   }
 
@@ -77,17 +87,26 @@ class DBService {
   }
 
   async addBook(book: Partial<Book>): Promise<Book> {
-    // Map frontend Book to backend BookRequestDTO if necessary
-    const dto = {
-      isbn: book.isbn,
-      material_state: book.material_state,
-      status: book.status,
-      cost: book.creditsCost,
-      title: book.title,
-      author: book.author,
-      gender: book.category,
-      pages: '0', // Adjust if possible
-      synopses: book.synopsis
+    // Map frontend Book to backend BookRequestDTO
+    const dto: BookRequestDTO = {
+      title: book.title || '',
+      author: book.author || '',
+      coverURL: book.coverURL,
+      synopses: book.synopsis,
+      pageCount: book.pageCount,
+      publisher: book.publisher,
+      publishedDate: book.publishedDate,
+      isbn10: book.isbn10,
+      isbn13: book.isbn13,
+      language: book.language,
+      edition: book.edition,
+      material_state: book.material_state || 'Good',
+      physicalFormat: book.physicalFormat,
+      publishPlace: book.publishPlace,
+      status: book.status || 'Available',
+      cost: book.creditsCost || 0,
+      gender: book.category || 'Ficção',
+      contributors: book.contributors
     };
     const response = await api.post('/books', dto);
     return this.mapBook(response.data);

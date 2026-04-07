@@ -10,6 +10,9 @@ export interface BookApiInfo {
   thumbnail?: string;
   categories?: string[];
   language?: string;
+  edition?: string;
+  physicalFormat?: string;
+  publishPlace?: string;
 }
 
 export const bookService = {
@@ -18,9 +21,9 @@ export const bookService = {
       const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
       const bibKey = `ISBN:${cleanIsbn}`;
       const response = await axios.get(`https://openlibrary.org/api/books?bibkeys=${bibKey}&format=json&jscmd=data`);
-      
+
       const bookData = response.data[bibKey];
-      
+
       if (bookData) {
         return {
           title: bookData.title,
@@ -31,7 +34,10 @@ export const bookService = {
           pageCount: bookData.number_of_pages,
           thumbnail: bookData.cover?.medium || bookData.cover?.large,
           categories: bookData.subjects?.map((s: any) => s.name) || [],
-          language: bookData.languages?.[0]?.key?.split('/').pop() || 'pt'
+          language: bookData.languages?.[0]?.key?.split('/').pop() || 'pt',
+          edition: bookData.by_statement, // Statement as fallback or check more fields
+          physicalFormat: bookData.physical_format,
+          publishPlace: bookData.publish_places?.[0]?.name
         };
       }
       return null;

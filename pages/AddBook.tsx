@@ -8,7 +8,7 @@ import ReferenceButtons from '../components/ReferenceButtons';
 import { bookService } from '../services/bookService';
 
 const FormField: React.FC<{ label: string, icon?: string, value: string, placeholder?: string, type?: string, onChange: (val: string) => void, required?: boolean, extra?: React.ReactNode }> = ({ label, icon, value, placeholder, type = "text", onChange, required, extra }) => (
-  <div className="space-y-2">
+  <div className="space-y-1.5">
     <div className="flex items-center justify-between px-2">
       <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">{label}</span>
       {extra}
@@ -25,7 +25,7 @@ const FormField: React.FC<{ label: string, icon?: string, value: string, placeho
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           required={required}
-          className="w-full px-5 py-4 rounded-3xl bg-white dark:bg-surface-dark dark:text-white focus:ring-4 focus:ring-primary/20 border border-black/5 dark:border-white/5 shadow-sm placeholder:text-text-muted/40 font-bold min-h-[120px] resize-none text-sm transition-all"
+          className="w-full px-5 py-3 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-4 focus:ring-primary/20 border border-black/5 dark:border-white/5 shadow-sm placeholder:text-text-muted/40 font-bold min-h-[100px] resize-none text-sm transition-all"
         />
       ) : (
         <input
@@ -34,7 +34,7 @@ const FormField: React.FC<{ label: string, icon?: string, value: string, placeho
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           required={required}
-          className={`w-full ${icon ? 'pl-12' : 'px-5'} pr-4 py-4 rounded-2xl bg-white dark:bg-surface-dark dark:text-white focus:ring-4 focus:ring-primary/20 border border-black/5 dark:border-white/5 shadow-sm placeholder:text-text-muted/50 font-bold transition-all outline-none`}
+          className={`w-full ${icon ? 'pl-12' : 'px-5'} pr-4 py-3 rounded-xl bg-white dark:bg-surface-dark dark:text-white focus:ring-4 focus:ring-primary/20 border border-black/5 dark:border-white/5 shadow-sm placeholder:text-text-muted/50 font-bold transition-all outline-none`}
         />
       )}
     </div>
@@ -50,7 +50,7 @@ const SelectField: React.FC<{ label: string, value: string, options: string[], o
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full px-5 py-4 pr-12 rounded-2xl bg-white dark:bg-surface-dark dark:text-white border border-black/5 dark:border-white/5 shadow-sm font-bold text-sm appearance-none focus:ring-4 focus:ring-primary/20 outline-none transition-all cursor-pointer relative z-10"
+        className="w-full px-5 py-3 pr-12 rounded-xl bg-white dark:bg-surface-dark dark:text-white border border-black/5 dark:border-white/5 shadow-sm font-bold text-sm appearance-none focus:ring-4 focus:ring-primary/20 outline-none transition-all cursor-pointer relative z-10"
         style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
       >
         {options.map(opt => <option key={opt} className="dark:bg-surface-dark">{opt}</option>)}
@@ -77,7 +77,17 @@ const AddBook: React.FC = () => {
     ownerNotes: '',
     isbn: '',
     pages: '',
-    cost: 2
+    cost: 2,
+    publisher: '',
+    publishedDate: '',
+    coverURL: '',
+    pageCount: 0,
+    isbn10: '',
+    isbn13: '',
+    edition: '',
+    publishPlace: '',
+    physicalFormat: '',
+    contributors: ''
   });
 
   useEffect(() => {
@@ -115,7 +125,7 @@ const AddBook: React.FC = () => {
               'Horror': 'Terror',
               'Romance': 'Romance'
             };
-            
+
             const primaryCat = bookInfo.categories?.[0] || '';
             const mappedGender = categoryMap[primaryCat] || (primaryCat.toLowerCase().includes('fiction') ? 'Ficção' : (primaryCat ? 'Não-Ficção' : prev.gender));
 
@@ -126,7 +136,17 @@ const AddBook: React.FC = () => {
               pages: bookInfo.pageCount?.toString() || prev.pages,
               synopsis: bookInfo.description || prev.synopsis,
               gender: mappedGender,
-              language: bookInfo.language === 'en' ? 'Inglês' : (bookInfo.language === 'pt' ? 'Português' : prev.language)
+              language: bookInfo.language === 'en' ? 'Inglês' : (bookInfo.language === 'pt' ? 'Português' : prev.language),
+              publisher: bookInfo.publisher || prev.publisher,
+              publishedDate: bookInfo.publishedDate || prev.publishedDate,
+              coverURL: bookInfo.thumbnail || prev.coverURL,
+              pageCount: bookInfo.pageCount || prev.pageCount,
+              isbn10: cleanIsbn.length === 10 ? cleanIsbn : prev.isbn10,
+              isbn13: cleanIsbn.length === 13 ? cleanIsbn : prev.isbn13,
+              edition: bookInfo.edition || prev.edition,
+              publishPlace: bookInfo.publishPlace || prev.publishPlace,
+              physicalFormat: bookInfo.physicalFormat || prev.physicalFormat,
+              contributors: bookInfo.authors.join(', ') || prev.contributors
             };
           });
         }
@@ -165,7 +185,8 @@ const AddBook: React.FC = () => {
       const newBook: Partial<Book> = {
         title: formData.title,
         author: formData.author,
-        isbn: formData.isbn || 'N/A',
+        isbn10: formData.isbn10 || (formData.isbn.length === 10 ? formData.isbn : ''),
+        isbn13: formData.isbn13 || (formData.isbn.length === 13 ? formData.isbn : ''),
         category: formData.gender,
         language: formData.language,
         ownerId: user.id || '',
@@ -174,9 +195,16 @@ const AddBook: React.FC = () => {
         creditsCost: formData.cost,
         locationApprox: 'Minha Área',
         distance: '0.0km',
-        photos: ['https://picsum.photos/seed/newbook/400/600'],
+        photos: formData.coverURL ? [formData.coverURL] : ['https://picsum.photos/seed/newbook/400/600'],
         synopsis: formData.synopsis,
-        ownerNotes: formData.ownerNotes
+        ownerNotes: formData.ownerNotes,
+        publisher: formData.publisher,
+        publishedDate: formData.publishedDate,
+        pageCount: parseInt(formData.pages) || formData.pageCount,
+        edition: formData.edition,
+        publishPlace: formData.publishPlace,
+        physicalFormat: formData.physicalFormat,
+        contributors: formData.contributors.split(',').map(s => s.trim()).filter(s => s.length > 0)
       };
 
       await dbService.addBook(newBook);
@@ -209,7 +237,7 @@ const AddBook: React.FC = () => {
           <div className="w-10"></div>
         </header>
 
-        <form onSubmit={handleSubmit} className="px-6 pt-8 space-y-10 max-w-2xl mx-auto w-full relative z-10">
+        <form onSubmit={handleSubmit} className="px-6 pt-6 space-y-5 max-w-4xl mx-auto w-full relative z-10">
           {/* Header Info */}
           <div className="flex justify-between items-center mb-2 px-1 text-text-muted font-black text-[10px] uppercase tracking-[0.2em]">
             <span>Informações do Livro</span>
@@ -231,9 +259,9 @@ const AddBook: React.FC = () => {
             )}
           />
 
-          <div className="space-y-6">
-            <div className="space-y-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <FormField
                     label="Título da Obra"
@@ -244,53 +272,102 @@ const AddBook: React.FC = () => {
                   />
                 </div>
 
-                <FormField
-                  label="Autor(es)"
-                  value={formData.author}
-                  onChange={val => setFormData({ ...formData, author: val })}
-                  placeholder="ex: Paulo Coelho"
-                  required
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                  <FormField
+                    label="Autor(es)"
+                    value={formData.author}
+                    onChange={val => setFormData({ ...formData, author: val })}
+                    placeholder="ex: Paulo Coelho"
+                    required
+                  />
+                  <FormField
+                    label="Gênero Principal"
+                    icon="category"
+                    value={formData.gender}
+                    onChange={val => setFormData({ ...formData, gender: val })}
+                    placeholder="ex: Ficção, Biografia..."
+                    required
+                  />
+                </div>
 
-                <FormField
-                  label="Gênero Principal"
-                  icon="category"
-                  value={formData.gender}
-                  onChange={val => setFormData({ ...formData, gender: val })}
-                  placeholder="ex: Ficção, Biografia..."
-                  required
-                />
+                <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                  <FormField
+                    label="Editora"
+                    value={formData.publisher}
+                    onChange={val => setFormData({ ...formData, publisher: val })}
+                    placeholder="ex: Companhia das Letras"
+                  />
+                  <FormField
+                    label="Data de Publicação"
+                    value={formData.publishedDate}
+                    onChange={val => setFormData({ ...formData, publishedDate: val })}
+                    placeholder="ex: 1988"
+                  />
+                </div>
 
-                <FormField
-                  label="Número de Páginas"
-                  type="number"
-                  value={formData.pages}
-                  onChange={val => setFormData({ ...formData, pages: val })}
-                  placeholder="ex: 250"
-                  required
-                />
+                <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                  <FormField
+                    label="Edição / Volume"
+                    value={formData.edition}
+                    onChange={val => setFormData({ ...formData, edition: val })}
+                    placeholder="ex: 1ª Edição"
+                  />
+                  <FormField
+                    label="Formato Físico"
+                    value={formData.physicalFormat}
+                    onChange={val => setFormData({ ...formData, physicalFormat: val })}
+                    placeholder="ex: Capa Comum"
+                  />
+                </div>
 
-                <FormField
-                  label="Idioma"
-                  icon="language"
-                  value={formData.language}
-                  onChange={val => setFormData({ ...formData, language: val })}
-                  placeholder="ex: Português"
-                  required
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                  <FormField
+                    label="Local de Publicação"
+                    value={formData.publishPlace}
+                    onChange={val => setFormData({ ...formData, publishPlace: val })}
+                    placeholder="ex: São Paulo, Brasil"
+                  />
+                  <FormField
+                    label="Idioma"
+                    icon="language"
+                    value={formData.language}
+                    onChange={val => setFormData({ ...formData, language: val })}
+                    placeholder="ex: Português"
+                    required
+                  />
+                </div>
 
-                <FormField
-                  label="Custo da Troca (Créditos)"
-                  type="number"
-                  value={formData.cost.toString()}
-                  onChange={val => setFormData({ ...formData, cost: parseInt(val) || 1 })}
-                  required
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                  <FormField
+                    label="Número de Páginas"
+                    type="number"
+                    value={formData.pages}
+                    onChange={val => setFormData({ ...formData, pages: val })}
+                    placeholder="ex: 250"
+                    required
+                  />
+                  <FormField
+                    label="Custo da Troca (Créditos)"
+                    type="number"
+                    value={formData.cost.toString()}
+                    onChange={val => setFormData({ ...formData, cost: parseInt(val) || 1 })}
+                    required
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <FormField
+                    label="Colaboradores (Tradutores, etc.)"
+                    value={formData.contributors}
+                    onChange={val => setFormData({ ...formData, contributors: val })}
+                    placeholder="ex: Trad. José da Silva (separar por vírgula)"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Condition Segmented Control */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div className="px-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Estado de Conservação</span>
               </div>
@@ -316,7 +393,7 @@ const AddBook: React.FC = () => {
             </div>
 
             {/* Photo Upload Slots */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div className="px-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Aparência do Livro</span>
               </div>
@@ -333,7 +410,7 @@ const AddBook: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-10">
+            <div className="grid grid-cols-1 gap-6">
               <FormField
                 label="Observações do Proprietário"
                 type="textarea"

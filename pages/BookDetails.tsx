@@ -143,6 +143,23 @@ const BookDetails: React.FC = () => {
                   <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Estado</p>
                   <p className="text-xs font-black dark:text-white">{book.material_state}</p>
                 </div>
+                {book.publisher && (
+                  <>
+                    <div className="col-span-3 h-[1px] bg-black/5 dark:bg-white/5 my-1"></div>
+                    <div className="text-center space-y-1">
+                      <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Editora</p>
+                      <p className="text-xs font-black dark:text-white truncate">{book.publisher}</p>
+                    </div>
+                    <div className="text-center space-y-1 border-x border-black/5 dark:border-white/5">
+                      <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Páginas</p>
+                      <p className="text-xs font-black dark:text-white">{book.pageCount || '-'}</p>
+                    </div>
+                    <div className="text-center space-y-1">
+                      <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Ano</p>
+                      <p className="text-xs font-black dark:text-white">{book.publishedDate || '-'}</p>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Owner Card */}
