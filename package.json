@@ -14,7 +14,6 @@
     "maplibre-gl": "^5.20.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-joyride": "^2.9.3",
     "react-router-dom": "^7.13.0"
   },
   "devDependencies": {
