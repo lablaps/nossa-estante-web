@@ -124,7 +124,7 @@ const Signup: React.FC = () => {
                                     className="w-full pl-16 pr-14 py-6 rounded-3xl border-0 ring-2 ring-black/5 dark:ring-white/5 bg-white dark:bg-surface-dark shadow-md focus:ring-4 focus:ring-primary outline-none text-2xl text-text-main dark:text-white appearance-none cursor-pointer font-medium transition-all"
                                     required
                                 >
-                                    <option value="USER">Leitor</option>
+                                    <option value="REGULAR">Leitor</option>
                                     <option value="ADMIN">Administrador</option>
                                 </select>
                                 <span className="material-symbols-outlined absolute right-4 text-text-muted pointer-events-none">expand_more</span>

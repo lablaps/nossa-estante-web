@@ -94,22 +94,15 @@ const AddBook: React.FC = () => {
     title: '',
     author: '',
     gender: 'Ficção',
-    language: 'Português',
-    condition: 'New',
     synopses: '',
     isbn: '',
     pages: '',
-    cost: 1, // Changed default to 1 (minimal points) or 0
+    cost: 1,
+    material_state: 'Good',
     publisher: '',
     publishedDate: '',
-    coverURL: '',
-    pageCount: 0,
-    isbn10: '',
-    isbn13: '',
-    edition: '',
-    publishPlace: '',
-    physicalFormat: '',
-    contributors: ''
+    language: '',
+    coverURL: ''
   });
 
   useEffect(() => {
@@ -154,19 +147,10 @@ const AddBook: React.FC = () => {
               author: bookInfo.authors.length > 0 ? bookInfo.authors.join(', ') : prev.author,
               pages: bookInfo.pageCount?.toString() || prev.pages,
               synopses: bookInfo.description || prev.synopses,
-              // Gender is now handled manually
-              language: bookInfo.language === 'en' ? 'Inglês' : (bookInfo.language === 'pt' ? 'Português' : prev.language),
               publisher: bookInfo.publisher || prev.publisher,
               publishedDate: bookInfo.publishedDate || prev.publishedDate,
-              coverURL: bookInfo.thumbnail || prev.coverURL,
-              pageCount: bookInfo.pageCount || prev.pageCount,
-              isbn10: cleanIsbn.length === 10 ? cleanIsbn : prev.isbn10,
-              isbn13: cleanIsbn.length === 13 ? cleanIsbn : prev.isbn13,
-              edition: bookInfo.edition || prev.edition,
-              publishPlace: bookInfo.publishPlace || prev.publishPlace,
-              physicalFormat: bookInfo.physicalFormat || prev.physicalFormat,
-              // Only fill contributors if the API actually has contributor info (not just authors)
-              contributors: prev.contributors 
+              language: bookInfo.language || prev.language,
+              coverURL: bookInfo.thumbnail || prev.coverURL
             };
           });
         }
@@ -203,23 +187,20 @@ const AddBook: React.FC = () => {
       const newBook: Partial<Book> = {
         title: formData.title,
         author: formData.author,
-        isbn10: formData.isbn10 || (formData.isbn.length === 10 ? formData.isbn : ''),
-        isbn13: formData.isbn13 || (formData.isbn.length === 13 ? formData.isbn : ''),
+        isbn: formData.isbn, 
+        isbn10: formData.isbn.length === 10 ? formData.isbn : undefined,
+        isbn13: formData.isbn.length === 13 ? formData.isbn : undefined,
         gender: formData.gender,
-        language: formData.language,
-        ownerId: user.id || '',
+        user: user.email || '', 
         status: 'Available',
-        material_state: conditionLabels[formData.condition],
+        material_state: conditionLabels[formData.material_state] || 'Good',
         cost: formData.cost,
-        coverURL: formData.coverURL, // Removed picsum fallback
         synopses: formData.synopses,
+        pages: formData.pages,
         publisher: formData.publisher,
         publishedDate: formData.publishedDate,
-        pageCount: parseInt(formData.pages) || formData.pageCount,
-        edition: formData.edition,
-        publishPlace: formData.publishPlace,
-        physicalFormat: formData.physicalFormat,
-        contributors: formData.contributors.split(',').map(s => s.trim()).filter(s => s.length > 0)
+        language: formData.language,
+        coverURL: formData.coverURL
       };
 
       await dbService.addBook(newBook);
@@ -303,53 +284,6 @@ const AddBook: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 md:col-span-2">
-                  <FormField
-                    label="Editora"
-                    value={formData.publisher}
-                    onChange={val => setFormData({ ...formData, publisher: val })}
-                    placeholder="ex: Companhia das Letras"
-                  />
-                  <FormField
-                    label="Data de Publicação"
-                    value={formData.publishedDate}
-                    onChange={val => setFormData({ ...formData, publishedDate: val })}
-                    placeholder="ex: 1988"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 md:col-span-2">
-                  <FormField
-                    label="Edição / Volume"
-                    value={formData.edition}
-                    onChange={val => setFormData({ ...formData, edition: val })}
-                    placeholder="ex: 1ª Edição"
-                  />
-                  <FormField
-                    label="Formato Físico"
-                    value={formData.physicalFormat}
-                    onChange={val => setFormData({ ...formData, physicalFormat: val })}
-                    placeholder="ex: Capa Comum"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
-                  <FormField
-                    label="Local de Publicação"
-                    value={formData.publishPlace}
-                    onChange={val => setFormData({ ...formData, publishPlace: val })}
-                    placeholder="ex: São Paulo, Brasil"
-                  />
-                  <FormField
-                    label="Idioma"
-                    icon="language"
-                    value={formData.language}
-                    onChange={val => setFormData({ ...formData, language: val })}
-                    placeholder="ex: Português"
-                    required
-                  />
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
                   <FormField
                     label="Número de Páginas"
@@ -367,15 +301,6 @@ const AddBook: React.FC = () => {
                     required
                   />
                 </div>
-
-                <div className="md:col-span-2">
-                  <FormField
-                    label="Colaboradores (Tradutores, etc.)"
-                    value={formData.contributors}
-                    onChange={val => setFormData({ ...formData, contributors: val })}
-                    placeholder="ex: Trad. José da Silva (separar por vírgula)"
-                  />
-                </div>
               </div>
             </div>
 
@@ -388,8 +313,8 @@ const AddBook: React.FC = () => {
                   <button
                     key={cond}
                     type="button"
-                    onClick={() => setFormData({ ...formData, condition: cond })}
-                    className={`flex-1 py-4 px-2 rounded-[22px] text-[10px] font-black uppercase tracking-widest transition-all ${formData.condition === cond
+                    onClick={() => setFormData({ ...formData, material_state: cond })}
+                    className={`flex-1 py-4 px-2 rounded-[22px] text-[10px] font-black uppercase tracking-widest transition-all ${formData.material_state === cond
                       ? 'bg-primary text-black shadow-lg shadow-primary/20 scale-[1.02]'
                       : 'text-text-muted hover:bg-black/5 dark:hover:bg-white/5'
                       }`}
@@ -400,7 +325,7 @@ const AddBook: React.FC = () => {
               </div>
               <p className="text-[10px] text-text-muted font-bold px-2 flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm">info</span>
-                {conditionDescriptions[formData.condition]}
+                {conditionDescriptions[formData.material_state]}
               </p>
             </div>
 
@@ -413,6 +338,38 @@ const AddBook: React.FC = () => {
                 placeholder="Uma breve descrição da história ou conteúdo..."
                 required
               />
+            </div>
+
+            <div className="pt-4 border-t border-black/5 dark:border-white/5 space-y-4">
+              <div className="px-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Metadados Adicionais (Opcional)</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  label="Editora"
+                  value={formData.publisher}
+                  onChange={val => setFormData({ ...formData, publisher: val })}
+                  placeholder="ex: Pearson"
+                />
+                <FormField
+                  label="Data de Publicação"
+                  value={formData.publishedDate}
+                  onChange={val => setFormData({ ...formData, publishedDate: val })}
+                  placeholder="ex: 2021"
+                />
+                <FormField
+                  label="Idioma"
+                  value={formData.language}
+                  onChange={val => setFormData({ ...formData, language: val })}
+                  placeholder="ex: Português"
+                />
+                <FormField
+                  label="URL da Capa"
+                  value={formData.coverURL}
+                  onChange={val => setFormData({ ...formData, coverURL: val })}
+                  placeholder="https://..."
+                />
+              </div>
             </div>
           </div>
 

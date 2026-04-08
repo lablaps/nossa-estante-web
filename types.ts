@@ -12,50 +12,53 @@ export interface Book {
   id: string;
   title: string;
   author: string;
+  isbn: string;
   isbn10?: string;
   isbn13?: string;
   gender: string;
-  language: string;
-  ownerId: string;
+  user: string;
   status: string;
   material_state: string;
   cost: number;
-  coverURL?: string;
   synopses: string;
-  pageCount?: number;
+  pages: string;
+  coverURL?: string;
   publisher?: string;
   publishedDate?: string;
+  language?: string;
   edition?: string;
   physicalFormat?: string;
   publishPlace?: string;
   contributors?: string[];
+  data?: string;
 }
 
 export interface Trade {
   id: string;
-  book: Book;
-  from_user: User;
-  to_user: User;
+  book: string; // Backend returns title/string
+  from_user: string; // Backend returns email/name
+  to_user: string; // Backend returns email/name
 }
 
 export interface BookRequestDTO {
   title: string;
   author: string;
-  coverURL?: string;
-  synopses?: string;
-  pageCount?: number;
-  publisher?: string;
-  publishedDate?: string;
+  isbn?: string;
   isbn10?: string;
   isbn13?: string;
+  gender: string;
+  status: string;
+  material_state: string;
+  cost: number;
+  synopses: string;
+  pageCount: number;
+  coverURL?: string;
+  publisher?: string;
+  publishedDate?: string;
   language?: string;
   edition?: string;
-  material_state: string;
   physicalFormat?: string;
   publishPlace?: string;
-  status: string;
-  cost: number;
-  gender: string;
   contributors?: string[];
 }
 

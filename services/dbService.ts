@@ -11,23 +11,25 @@ class DBService {
       id: b.id?.toString() || '',
       title: b.title || '',
       author: b.author || '',
+      isbn: b.isbn || b.isbn13 || b.isbn10 || '',
       isbn10: b.isbn10,
       isbn13: b.isbn13,
       gender: b.gender || '',
-      language: b.language || '',
-      ownerId: b.user?.id?.toString() || b.userId?.toString() || '',
+      user: typeof b.user === 'string' ? b.user : (b.user?.email || ''),
       status: b.status || '',
       material_state: b.material_state || '',
       cost: Number(b.cost) || 0,
       synopses: b.synopses || '',
+      pages: (b.pageCount || b.pages || '0').toString(),
       coverURL: b.coverURL,
-      pageCount: b.pageCount,
       publisher: b.publisher,
       publishedDate: b.publishedDate,
+      language: b.language,
       edition: b.edition,
       physicalFormat: b.physicalFormat,
       publishPlace: b.publishPlace,
-      contributors: b.contributors || []
+      contributors: b.contributors,
+      data: b.data
     };
   }
 
@@ -79,21 +81,22 @@ class DBService {
     const dto: BookRequestDTO = {
       title: book.title || '',
       author: book.author || '',
-      coverURL: book.coverURL,
-      synopses: book.synopses,
-      pageCount: book.pageCount,
-      publisher: book.publisher,
-      publishedDate: book.publishedDate,
+      isbn: book.isbn,
       isbn10: book.isbn10,
       isbn13: book.isbn13,
+      gender: book.gender || 'Ficção',
+      status: book.status || 'Available',
+      material_state: book.material_state || 'Good',
+      cost: Number(book.cost) || 0,
+      synopses: book.synopses || '',
+      pageCount: Number(book.pages) || 0,
+      coverURL: book.coverURL,
+      publisher: book.publisher,
+      publishedDate: book.publishedDate,
       language: book.language,
       edition: book.edition,
-      material_state: book.material_state || 'Good',
       physicalFormat: book.physicalFormat,
       publishPlace: book.publishPlace,
-      status: book.status || 'Available',
-      cost: book.cost || 0,
-      gender: book.gender || 'Ficção',
       contributors: book.contributors
     };
     const response = await api.post('/books', dto);
@@ -116,7 +119,14 @@ class DBService {
     } else {
       rawExchanges = Array.isArray(data) ? data : (data.content || []);
     }
-    return rawExchanges;
+    
+    // Ensure it matches Trade interface (Strings)
+    return rawExchanges.map(ex => ({
+      id: ex.id?.toString() || '',
+      book: ex.book || '',
+      from_user: ex.from_user || '',
+      to_user: ex.to_user || ''
+    }));
   }
 
   async createTrade(bookId: string, ownerId?: string): Promise<Trade> {

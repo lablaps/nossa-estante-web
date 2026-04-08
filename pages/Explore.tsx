@@ -95,9 +95,12 @@ const Explore: React.FC = () => {
                 <div className="absolute bottom-[calc(80px+1.5rem)] md:bottom-6 left-4 right-4 z-20">
                     {activeBook && (
                         <div className="bg-white/90 dark:bg-surface-dark/95 backdrop-blur-xl p-4 rounded-[24px] shadow-2xl border border-white/20 dark:border-white/5 flex gap-4 animate-in slide-in-from-bottom-10 fade-in duration-300">
-                            <div className="size-20 rounded-xl overflow-hidden shadow-md shrink-0 relative">
-                                <img src={activeBook.coverURL || 'https://picsum.photos/seed/book/200/300'} className="w-full h-full object-cover" alt="" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                            <div className="size-20 rounded-xl overflow-hidden shadow-md shrink-0 relative flex items-center justify-center bg-gray-100 dark:bg-white/5">
+                                {activeBook.coverURL ? (
+                                    <img src={activeBook.coverURL} alt={activeBook.title} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="material-symbols-outlined text-3xl text-text-muted opacity-40">book</span>
+                                )}
                             </div>
                             <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                                 <div>

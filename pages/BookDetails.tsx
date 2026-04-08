@@ -49,7 +49,7 @@ const BookDetails: React.FC = () => {
   const handleRedeem = async () => {
     if (!user || !book) return;
     try {
-      await dbService.createTrade(book.id, book.ownerId);
+      await dbService.createTrade(book.id, book.user);
       navigate('/minha-estante'); // Navigate to my shelf or exchanges list
     } catch (error) {
       console.error('Error creating trade:', error);
@@ -81,29 +81,17 @@ const BookDetails: React.FC = () => {
             {/* Left Column: Image Hero */}
             <div className="relative group">
               <div className="w-full aspect-[4/5] md:aspect-[3/4] relative flex items-center justify-center overflow-hidden bg-gray-200 dark:bg-surface-dark md:rounded-3xl shadow-2xl">
-                {/* Blurred background cover */}
-                {book.coverURL && (
-                  <div 
-                    className="absolute inset-0 scale-110 blur-3xl opacity-30 dark:opacity-20"
-                    style={{ 
-                      backgroundImage: `url(${book.coverURL})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }}
-                  />
-                )}
-                
-                {/* Main Image */}
+                {/* Book Image or Main Icon */}
                 {book.coverURL ? (
                   <img 
                     src={book.coverURL} 
-                    className="relative z-10 h-[75%] object-contain shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-lg transform transition-transform duration-500 group-hover:scale-105" 
                     alt={book.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                 ) : (
                   <div className="relative z-10 flex flex-col items-center gap-4 text-text-muted">
                     <span className="material-symbols-outlined text-8xl">book_4</span>
-                    <p className="font-bold text-sm tracking-widest uppercase opacity-40">Sem Capa</p>
+                    <p className="font-bold text-sm tracking-widest uppercase opacity-40">Coleção Nossa Estante</p>
                   </div>
                 )}
                 
@@ -130,42 +118,30 @@ const BookDetails: React.FC = () => {
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-3 gap-4 p-5 bg-white dark:bg-surface-dark rounded-3xl border border-black/5 dark:border-white/5 shadow-sm">
+              <div className="grid grid-cols-2 gap-4 p-5 bg-white dark:bg-surface-dark rounded-3xl border border-black/5 dark:border-white/5 shadow-sm">
                 <div className="text-center space-y-1">
                   <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Gênero</p>
                   <p className="text-xs font-black dark:text-white truncate">{book.gender}</p>
                 </div>
-                <div className="text-center space-y-1 border-x border-black/5 dark:border-white/5">
-                  <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Idioma</p>
-                  <p className="text-xs font-black dark:text-white">{book.language}</p>
-                </div>
-                <div className="text-center space-y-1">
+                <div className="text-center space-y-1 border-l border-black/5 dark:border-white/5">
                   <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Estado</p>
                   <p className="text-xs font-black dark:text-white">{book.material_state}</p>
                 </div>
-                {book.publisher && (
-                  <>
-                    <div className="col-span-3 h-[1px] bg-black/5 dark:bg-white/5 my-1"></div>
-                    <div className="text-center space-y-1">
-                      <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Editora</p>
-                      <p className="text-xs font-black dark:text-white truncate">{book.publisher}</p>
-                    </div>
-                    <div className="text-center space-y-1 border-x border-black/5 dark:border-white/5">
-                      <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Páginas</p>
-                      <p className="text-xs font-black dark:text-white">{book.pageCount || '-'}</p>
-                    </div>
-                    <div className="text-center space-y-1">
-                      <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Ano</p>
-                      <p className="text-xs font-black dark:text-white">{book.publishedDate || '-'}</p>
-                    </div>
-                  </>
-                )}
+                <div className="col-span-2 h-[1px] bg-black/5 dark:bg-white/5 my-1"></div>
+                <div className="text-center space-y-1">
+                  <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Páginas</p>
+                  <p className="text-xs font-black dark:text-white">{book.pages || '-'}</p>
+                </div>
+                <div className="text-center space-y-1 border-l border-black/5 dark:border-white/5">
+                  <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">ISBN</p>
+                  <p className="text-xs font-black dark:text-white">{book.isbn || '-'}</p>
+                </div>
               </div>
 
               {/* Owner Info - Simplified as backend doesn't provide full owner details in book response easily */}
               <div className="p-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20">
                 <p className="text-[10px] uppercase font-bold text-primary/70 tracking-tighter leading-none">ID do Proprietário</p>
-                <p className="text-lg font-black dark:text-white">{book.ownerId || 'Indisponível'}</p>
+                <p className="text-lg font-black dark:text-white">{book.user || 'Indisponível'}</p>
               </div>
 
               {/* Synopsis Section */}
@@ -176,6 +152,38 @@ const BookDetails: React.FC = () => {
                     {book.synopses || "Este livro ainda não possui uma sinopse detalhada."}
                   </p>
                 </section>
+
+                {(book.publisher || book.publishedDate || book.language) && (
+                  <section className="space-y-3 pt-4">
+                    <h3 className="text-sm font-black dark:text-white uppercase tracking-[0.2em] opacity-40">Informações Adicionais</h3>
+                    <div className="bg-white/30 dark:bg-white/5 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 border border-black/5 dark:border-white/5">
+                      {book.publisher && (
+                        <div>
+                          <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Editora</p>
+                          <p className="text-sm font-bold dark:text-white">{book.publisher}</p>
+                        </div>
+                      )}
+                      {book.publishedDate && (
+                        <div>
+                          <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Publicação</p>
+                          <p className="text-sm font-bold dark:text-white">{book.publishedDate}</p>
+                        </div>
+                      )}
+                      {book.language && (
+                        <div>
+                          <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Idioma</p>
+                          <p className="text-sm font-bold dark:text-white">{book.language}</p>
+                        </div>
+                      )}
+                      {book.edition && (
+                        <div>
+                          <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Edição</p>
+                          <p className="text-sm font-bold dark:text-white">{book.edition}</p>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )}
               </div>
             </div>
           </div>

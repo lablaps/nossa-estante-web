@@ -122,13 +122,11 @@ const MyShelf: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
               {filteredBooks.map(book => (
                 <div key={book.id} className="group cursor-pointer">
-                  <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-xl mb-4 group-hover:-translate-y-2 transition-all duration-500 ring-1 ring-black/5 bg-gray-100 dark:bg-surface-dark">
+                  <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-xl mb-4 group-hover:-translate-y-2 transition-all duration-500 ring-1 ring-black/5 bg-gray-100 dark:bg-surface-dark flex items-center justify-center">
                     {book.coverURL ? (
-                      <img src={book.coverURL} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                      <img src={book.coverURL} alt={book.title} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-white/5 opacity-40">
-                        <span className="material-symbols-outlined text-5xl">book</span>
-                      </div>
+                      <span className="material-symbols-outlined text-5xl text-text-muted opacity-40">book</span>
                     )}
                     <div className={`absolute top-4 left-4 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg ${book.status === 'Available' ? 'bg-primary text-black' : 'bg-amber-400 text-amber-950'
                       }`}>

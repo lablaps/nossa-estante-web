@@ -121,13 +121,11 @@ const Home: React.FC = () => {
             {books.length > 0 ? (
               books.map((book) => (
                 <Link to={`/livro/${book.id}`} key={book.id} className="w-[140px] flex-shrink-0 group">
-                  <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-lg mb-3 bg-gray-100 dark:bg-surface-dark">
+                  <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-lg mb-3 bg-gray-100 dark:bg-surface-dark flex items-center justify-center">
                     {book.coverURL ? (
-                      <img src={book.coverURL} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={book.title} />
+                      <img src={book.coverURL} alt={book.title} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-white/5">
-                        <span className="material-symbols-outlined text-4xl text-text-muted">book</span>
-                      </div>
+                      <span className="material-symbols-outlined text-4xl text-text-muted opacity-40">book</span>
                     )}
                   </div>
                   <h3 className="font-bold text-sm truncate dark:text-white w-full">{book.title}</h3>
