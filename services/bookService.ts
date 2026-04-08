@@ -30,12 +30,12 @@ export const bookService = {
           authors: bookData.authors?.map((a: any) => a.name) || [],
           publisher: bookData.publishers?.[0]?.name,
           publishedDate: bookData.publish_date,
-          description: typeof bookData.notes === 'string' ? bookData.notes : (bookData.subjects?.map((s: any) => s.name).join(', ')),
+          description: typeof bookData.notes === 'string' ? bookData.notes : undefined,
           pageCount: bookData.number_of_pages,
           thumbnail: bookData.cover?.medium || bookData.cover?.large,
           categories: bookData.subjects?.map((s: any) => s.name) || [],
-          language: bookData.languages?.[0]?.key?.split('/').pop() || 'pt',
-          edition: bookData.by_statement, // Statement as fallback or check more fields
+          language: bookData.languages?.[0]?.key?.split('/').pop(),
+          edition: undefined, // by_statement is generic and often incorrect for 'edition' field
           physicalFormat: bookData.physical_format,
           publishPlace: bookData.publish_places?.[0]?.name
         };

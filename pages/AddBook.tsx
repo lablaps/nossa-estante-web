@@ -3,9 +3,53 @@ import { useNavigate } from 'react-router-dom';
 import { dbService } from '../services/dbService';
 import { authService } from '../services/authService';
 import Layout from '../components/Layout';
-import { Book, BookCondition, User } from '../types';
+import { Book, User } from '../types';
 import ReferenceButtons from '../components/ReferenceButtons';
 import { bookService } from '../services/bookService';
+
+const BOOK_GENRES = [
+  'Ficção',
+  'Não-Ficção',
+  'Romance',
+  'Fantasia / Ficção Científica',
+  'Terror / Suspense',
+  'Biografia / Memórias',
+  'Autoajuda',
+  'Negócios / Carreira',
+  'Infantil',
+  'Jovem Adulto (YA)',
+  'Acadêmico / Técnico',
+  'Outros'
+];
+
+const SelectField: React.FC<{ label: string, icon?: string, value: string, options: string[], onChange: (val: string) => void, required?: boolean }> = ({ label, icon, value, options, onChange, required }) => (
+  <div className="space-y-1.5">
+    <div className="px-2">
+      <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">{label}</span>
+    </div>
+    <div className="relative flex items-center group">
+      {icon && (
+        <span className="material-symbols-outlined absolute left-4 text-primary group-focus-within:text-primary-dark transition-colors z-10 pointer-events-none">
+          {icon}
+        </span>
+      )}
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        required={required}
+        className={`w-full ${icon ? 'pl-12' : 'px-5'} pr-10 py-3 rounded-xl bg-white dark:bg-surface-dark dark:text-white focus:ring-4 focus:ring-primary/20 border border-black/5 dark:border-white/5 shadow-sm font-bold transition-all outline-none appearance-none cursor-pointer`}
+      >
+        <option value="" disabled>Selecione o gênero</option>
+        {options.map(opt => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+      <span className="material-symbols-outlined absolute right-4 text-text-muted/40 pointer-events-none">
+        expand_more
+      </span>
+    </div>
+  </div>
+);
 
 const FormField: React.FC<{ label: string, icon?: string, value: string, placeholder?: string, type?: string, onChange: (val: string) => void, required?: boolean, extra?: React.ReactNode }> = ({ label, icon, value, placeholder, type = "text", onChange, required, extra }) => (
   <div className="space-y-1.5">
@@ -41,27 +85,6 @@ const FormField: React.FC<{ label: string, icon?: string, value: string, placeho
   </div>
 );
 
-const SelectField: React.FC<{ label: string, value: string, options: string[], onChange: (val: string) => void }> = ({ label, value, options, onChange }) => (
-  <div className="space-y-2">
-    <div className="px-2">
-      <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">{label}</span>
-    </div>
-    <div className="relative flex items-center group">
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="w-full px-5 py-3 pr-12 rounded-xl bg-white dark:bg-surface-dark dark:text-white border border-black/5 dark:border-white/5 shadow-sm font-bold text-sm appearance-none focus:ring-4 focus:ring-primary/20 outline-none transition-all cursor-pointer relative z-10"
-        style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
-      >
-        {options.map(opt => <option key={opt} className="dark:bg-surface-dark">{opt}</option>)}
-      </select>
-      <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none group-focus-within:translate-y-[-70%] transition-transform z-20">
-        expand_more
-      </span>
-    </div>
-  </div>
-);
-
 const AddBook: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -72,12 +95,11 @@ const AddBook: React.FC = () => {
     author: '',
     gender: 'Ficção',
     language: 'Português',
-    condition: 'New' as BookCondition,
-    synopsis: '',
-    ownerNotes: '',
+    condition: 'New',
+    synopses: '',
     isbn: '',
     pages: '',
-    cost: 2,
+    cost: 1, // Changed default to 1 (minimal points) or 0
     publisher: '',
     publishedDate: '',
     coverURL: '',
@@ -126,16 +148,13 @@ const AddBook: React.FC = () => {
               'Romance': 'Romance'
             };
 
-            const primaryCat = bookInfo.categories?.[0] || '';
-            const mappedGender = categoryMap[primaryCat] || (primaryCat.toLowerCase().includes('fiction') ? 'Ficção' : (primaryCat ? 'Não-Ficção' : prev.gender));
-
             return {
               ...prev,
               title: bookInfo.title || prev.title,
-              author: bookInfo.authors.join(', ') || prev.author,
+              author: bookInfo.authors.length > 0 ? bookInfo.authors.join(', ') : prev.author,
               pages: bookInfo.pageCount?.toString() || prev.pages,
-              synopsis: bookInfo.description || prev.synopsis,
-              gender: mappedGender,
+              synopses: bookInfo.description || prev.synopses,
+              // Gender is now handled manually
               language: bookInfo.language === 'en' ? 'Inglês' : (bookInfo.language === 'pt' ? 'Português' : prev.language),
               publisher: bookInfo.publisher || prev.publisher,
               publishedDate: bookInfo.publishedDate || prev.publishedDate,
@@ -146,7 +165,8 @@ const AddBook: React.FC = () => {
               edition: bookInfo.edition || prev.edition,
               publishPlace: bookInfo.publishPlace || prev.publishPlace,
               physicalFormat: bookInfo.physicalFormat || prev.physicalFormat,
-              contributors: bookInfo.authors.join(', ') || prev.contributors
+              // Only fill contributors if the API actually has contributor info (not just authors)
+              contributors: prev.contributors 
             };
           });
         }
@@ -158,20 +178,18 @@ const AddBook: React.FC = () => {
     }
   };
 
-  const conditionLabels: Record<BookCondition, string> = {
+  const conditionLabels: Record<string, string> = {
     'New': 'Novo',
     'Very Good': 'Muito Bom',
     'Good': 'Bom',
-    'Used': 'Usado',
-    'Fair': 'Regular'
+    'Used': 'Usado'
   };
 
-  const conditionDescriptions: Record<BookCondition, string> = {
+  const conditionDescriptions: Record<string, string> = {
     'New': 'Novo, sem uso, em perfeitas condições.',
     'Very Good': 'Lido, mas sem marcas de uso ou dobras.',
     'Good': 'Pequenas marcas de uso ou dobras leves.',
-    'Used': 'Possui marcas visíveis de uso ou anotações.',
-    'Fair': 'Bastante usado, com marcas evidentes.'
+    'Used': 'Possui marcas visíveis de uso ou anotações.'
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -187,17 +205,14 @@ const AddBook: React.FC = () => {
         author: formData.author,
         isbn10: formData.isbn10 || (formData.isbn.length === 10 ? formData.isbn : ''),
         isbn13: formData.isbn13 || (formData.isbn.length === 13 ? formData.isbn : ''),
-        category: formData.gender,
+        gender: formData.gender,
         language: formData.language,
         ownerId: user.id || '',
         status: 'Available',
         material_state: conditionLabels[formData.condition],
-        creditsCost: formData.cost,
-        locationApprox: 'Minha Área',
-        distance: '0.0km',
-        photos: formData.coverURL ? [formData.coverURL] : ['https://picsum.photos/seed/newbook/400/600'],
-        synopsis: formData.synopsis,
-        ownerNotes: formData.ownerNotes,
+        cost: formData.cost,
+        coverURL: formData.coverURL, // Removed picsum fallback
+        synopses: formData.synopses,
         publisher: formData.publisher,
         publishedDate: formData.publishedDate,
         pageCount: parseInt(formData.pages) || formData.pageCount,
@@ -238,13 +253,11 @@ const AddBook: React.FC = () => {
         </header>
 
         <form onSubmit={handleSubmit} className="px-6 pt-6 space-y-5 max-w-4xl mx-auto w-full relative z-10">
-          {/* Header Info */}
           <div className="flex justify-between items-center mb-2 px-1 text-text-muted font-black text-[10px] uppercase tracking-[0.2em]">
             <span>Informações do Livro</span>
             <span className="text-primary">Etapa 1 de 1</span>
           </div>
 
-          {/* ISBN Section */}
           <FormField
             label="ISBN (Preenchimento Automático)"
             icon="barcode"
@@ -280,12 +293,12 @@ const AddBook: React.FC = () => {
                     placeholder="ex: Paulo Coelho"
                     required
                   />
-                  <FormField
+                  <SelectField
                     label="Gênero Principal"
                     icon="category"
                     value={formData.gender}
+                    options={BOOK_GENRES}
                     onChange={val => setFormData({ ...formData, gender: val })}
-                    placeholder="ex: Ficção, Biografia..."
                     required
                   />
                 </div>
@@ -347,7 +360,7 @@ const AddBook: React.FC = () => {
                     required
                   />
                   <FormField
-                    label="Custo da Troca (Créditos)"
+                    label="Custo da Troca"
                     type="number"
                     value={formData.cost.toString()}
                     onChange={val => setFormData({ ...formData, cost: parseInt(val) || 1 })}
@@ -366,13 +379,12 @@ const AddBook: React.FC = () => {
               </div>
             </div>
 
-            {/* Condition Segmented Control */}
             <div className="space-y-2">
               <div className="px-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Estado de Conservação</span>
               </div>
               <div className="bg-white dark:bg-surface-dark rounded-[28px] p-1.5 flex gap-1 shadow-sm border border-black/5 dark:border-white/5 overflow-hidden">
-                {(['New', 'Very Good', 'Good', 'Used'] as BookCondition[]).map((cond) => (
+                {['New', 'Very Good', 'Good', 'Used'].map((cond) => (
                   <button
                     key={cond}
                     type="button"
@@ -392,39 +404,12 @@ const AddBook: React.FC = () => {
               </p>
             </div>
 
-            {/* Photo Upload Slots */}
-            <div className="space-y-2">
-              <div className="px-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Aparência do Livro</span>
-              </div>
-              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-                <button type="button" className="shrink-0 size-28 rounded-3xl border-2 border-primary border-dashed bg-primary/5 flex flex-col items-center justify-center text-primary group active:scale-95 transition-all shadow-sm">
-                  <span className="material-symbols-outlined text-4xl">add_a_photo</span>
-                  <span className="text-[9px] font-black uppercase mt-1">Adicionar</span>
-                </button>
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="shrink-0 size-28 rounded-3xl bg-white dark:bg-surface-dark flex items-center justify-center text-text-muted/20 border border-black/5 dark:border-white/5 shadow-sm">
-                    <span className="material-symbols-outlined text-4xl">inventory_2</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 gap-6">
-              <FormField
-                label="Observações do Proprietário"
-                type="textarea"
-                value={formData.ownerNotes}
-                onChange={val => setFormData({ ...formData, ownerNotes: val })}
-                placeholder="Mencione marcas, grifos ou danos..."
-                extra={<span className="text-[9px] font-black text-text-muted uppercase tracking-widest">Opcional</span>}
-              />
-
               <FormField
                 label="Sinopse do Livro"
                 type="textarea"
-                value={formData.synopsis}
-                onChange={val => setFormData({ ...formData, synopsis: val })}
+                value={formData.synopses}
+                onChange={val => setFormData({ ...formData, synopses: val })}
                 placeholder="Uma breve descrição da história ou conteúdo..."
                 required
               />

@@ -49,17 +49,8 @@ const BookDetails: React.FC = () => {
   const handleRedeem = async () => {
     if (!user || !book) return;
     try {
-      const tradeId = `trade_${Date.now()}`;
-      await dbService.createTrade({
-        id: tradeId,
-        bookId: book.id,
-        fromUserId: book.ownerId,
-        toUserId: user.id || '',
-        status: 'ongoing',
-        meetingPoint: 'Ponto de Segurança: Estação Central',
-        qrCodeFake: 'MOCK_QR_CODE'
-      });
-      navigate(`/chat/${tradeId}`);
+      await dbService.createTrade(book.id, book.ownerId);
+      navigate('/minha-estante'); // Navigate to my shelf or exchanges list
     } catch (error) {
       console.error('Error creating trade:', error);
       alert('Erro ao resgatar livro. Tente novamente.');
@@ -91,27 +82,36 @@ const BookDetails: React.FC = () => {
             <div className="relative group">
               <div className="w-full aspect-[4/5] md:aspect-[3/4] relative flex items-center justify-center overflow-hidden bg-gray-200 dark:bg-surface-dark md:rounded-3xl shadow-2xl">
                 {/* Blurred background cover */}
-                <div 
-                  className="absolute inset-0 scale-110 blur-3xl opacity-30 dark:opacity-20"
-                  style={{ 
-                    backgroundImage: `url(${book.photos?.[0] || 'https://picsum.photos/seed/book/200/300'})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                />
+                {book.coverURL && (
+                  <div 
+                    className="absolute inset-0 scale-110 blur-3xl opacity-30 dark:opacity-20"
+                    style={{ 
+                      backgroundImage: `url(${book.coverURL})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
+                  />
+                )}
                 
                 {/* Main Image */}
-                <img 
-                  src={book.photos?.[0] || 'https://picsum.photos/seed/book/200/300'} 
-                  className="relative z-10 h-[75%] object-contain shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-lg transform transition-transform duration-500 group-hover:scale-105" 
-                  alt={book.title} 
-                />
+                {book.coverURL ? (
+                  <img 
+                    src={book.coverURL} 
+                    className="relative z-10 h-[75%] object-contain shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-lg transform transition-transform duration-500 group-hover:scale-105" 
+                    alt={book.title} 
+                  />
+                ) : (
+                  <div className="relative z-10 flex flex-col items-center gap-4 text-text-muted">
+                    <span className="material-symbols-outlined text-8xl">book_4</span>
+                    <p className="font-bold text-sm tracking-widest uppercase opacity-40">Sem Capa</p>
+                  </div>
+                )}
                 
-                {/* Distance Badge */}
+                {/* Status Badge */}
                 <div className="absolute top-6 right-6 z-20 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg border border-white/20">
                   <span className="text-[10px] font-black text-primary uppercase tracking-tighter flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">location_on</span>
-                    {book.distance || 'Prox.'}
+                    <span className="material-symbols-outlined text-xs">info</span>
+                    {book.status}
                   </span>
                 </div>
               </div>
@@ -132,8 +132,8 @@ const BookDetails: React.FC = () => {
               {/* Stats Grid */}
               <div className="grid grid-cols-3 gap-4 p-5 bg-white dark:bg-surface-dark rounded-3xl border border-black/5 dark:border-white/5 shadow-sm">
                 <div className="text-center space-y-1">
-                  <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Categoria</p>
-                  <p className="text-xs font-black dark:text-white truncate">{book.category}</p>
+                  <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Gênero</p>
+                  <p className="text-xs font-black dark:text-white truncate">{book.gender}</p>
                 </div>
                 <div className="text-center space-y-1 border-x border-black/5 dark:border-white/5">
                   <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Idioma</p>
@@ -162,69 +162,33 @@ const BookDetails: React.FC = () => {
                 )}
               </div>
 
-              {/* Owner Card */}
-              <div className="flex items-center justify-between p-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20">
-                <div className="flex items-center gap-4">
-                  <div className="size-14 bg-white p-1 rounded-full shadow-md">
-                    <img 
-                      src={book.ownerAvatar || 'https://picsum.photos/seed/owner/200'} 
-                      className="w-full h-full rounded-full object-cover" 
-                      alt="" 
-                    />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-primary/70 tracking-tighter leading-none">Anunciado por</p>
-                    <p className="text-lg font-black dark:text-white">{book.ownerName || 'Usuário'}</p>
-                  </div>
-                </div>
-                <button className="size-12 bg-white dark:bg-surface-dark text-primary rounded-xl shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
-                  <span className="material-symbols-outlined">chat</span>
-                </button>
+              {/* Owner Info - Simplified as backend doesn't provide full owner details in book response easily */}
+              <div className="p-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20">
+                <p className="text-[10px] uppercase font-bold text-primary/70 tracking-tighter leading-none">ID do Proprietário</p>
+                <p className="text-lg font-black dark:text-white">{book.ownerId || 'Indisponível'}</p>
               </div>
 
-              {/* Tabs-like Content Sections */}
+              {/* Synopsis Section */}
               <div className="space-y-8">
                 <section className="space-y-3">
                   <h3 className="text-sm font-black dark:text-white uppercase tracking-[0.2em] opacity-40">Sinopse</h3>
                   <p className="text-sm text-text-muted leading-relaxed font-medium bg-white/50 dark:bg-white/5 p-4 rounded-2xl">
-                    {book.synopsis || "Este livro ainda não possui uma sinopse detalhada. Explore as páginas para descobrir mais sobre esta obra incrível."}
+                    {book.synopses || "Este livro ainda não possui uma sinopse detalhada."}
                   </p>
-                </section>
-
-                <section className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-black dark:text-white uppercase tracking-[0.2em] opacity-40">Localização</h3>
-                    <span className="text-[10px] font-bold text-primary">Ponto de Segurança Disponível</span>
-                  </div>
-                  <div className="h-48 bg-gray-200 dark:bg-surface-dark rounded-3xl overflow-hidden relative border border-black/5 dark:border-white/5 group shadow-inner">
-                    <MapLibre 
-                      lat={book.latitude || -23.5505} 
-                      lng={book.longitude || -46.6333} 
-                    />
-                    <div className="absolute bottom-4 left-4 right-4 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-md p-3 rounded-2xl shadow-xl flex items-center gap-3 z-10">
-                      <div className="p-2 bg-primary/20 text-primary rounded-lg">
-                        <span className="material-symbols-outlined text-sm">shield</span>
-                      </div>
-                      <p className="text-[11px] font-bold dark:text-white leading-tight">
-                        Estação Central de Trocas <br/>
-                        <span className="font-normal opacity-60">Seguro para ambos os lados</span>
-                      </p>
-                    </div>
-                  </div>
                 </section>
               </div>
             </div>
           </div>
         </main>
 
-        {/* Professional Floating Action Bar */}
+        {/* Floating Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 z-[100] px-4 pb-4 md:pb-8">
           <div className="max-w-2xl mx-auto bg-white/80 dark:bg-surface-dark/80 backdrop-blur-2xl border border-black/5 dark:border-white/10 p-3 md:p-4 rounded-[32px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] flex items-center justify-between">
             <div className="pl-6 flex flex-col">
               <span className="text-[10px] text-text-muted font-bold uppercase tracking-widest opacity-60">Investimento</span>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-primary leading-none tracking-tighter">{book.creditsCost}</span>
-                <span className="text-xs font-black text-primary opacity-60 uppercase tracking-tighter">Créditos</span>
+                <span className="text-3xl font-black text-primary leading-none tracking-tighter">{book.cost}</span>
+                <span className="text-xs font-black text-primary opacity-60 uppercase tracking-tighter">Pontos</span>
               </div>
             </div>
             

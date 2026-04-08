@@ -5,20 +5,30 @@ const AUTH_KEY = 'ns_auth_token';
 const REFRESH_KEY = 'ns_refresh_token';
 
 class AuthService {
-  private mapUser(u: any): User {
+  private parseJwt(token: string) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  private mapUserFromToken(token: string): User | null {
+    const payload = this.parseJwt(token);
+    if (!payload) return null;
+
+    const email = payload.sub || '';
     return {
-      id: u.id?.toString() || '',
-      name: u.name || 'User',
-      email: u.email || '',
-      reputation: u.reputation || 5.0,
-      credits: u.credits || 0,
-      avatar: u.avatar || `https://picsum.photos/seed/${u.id}/200`,
-      role: u.role,
-      cpf: u.cpf,
-      phone: u.phone,
-      birthDate: u.birthDate,
-      address: u.address,
-      isFirstAccess: u.isFirstAccess ?? true
+      id: '0', // Placeholder or extract if present in claims
+      name: email.split('@')[0], // Using email prefix as name since backend doesn't provide it on login
+      email: email,
+      role: payload.role
     };
   }
 
@@ -33,33 +43,29 @@ class AuthService {
       localStorage.setItem(AUTH_KEY, accessToken);
       localStorage.setItem(REFRESH_KEY, refreshToken);
 
-      const user = await this.getCurrentUser();
+      const user = this.mapUserFromToken(accessToken);
       if (!user) return null;
 
       return { token: accessToken, user };
     } catch (error) {
-      console.error('Login failed:', error);
-      return null;
+      throw error;
     }
   }
 
-  async signup(data: { name: string; email: string; password_raw: string; role: string; cpf?: string; phone?: string; birthDate?: string; address?: string }): Promise<{ token: string; user: User } | null> {
+  async signup(data: { name: string; email: string; password_raw: string; role: string }): Promise<{ token: string; user: User } | null> {
     try {
+      // In register response, the backend returns UserResponse with the real name.
+      // But we call login afterwards to get the token.
       await api.post('/auth/register', {
         name: data.name,
         email: data.email,
         password: data.password_raw,
-        role: data.role,
-        cpf: data.cpf,
-        phone: data.phone,
-        birthDate: data.birthDate,
-        address: data.address
+        role: data.role
       });
 
       return this.login(data.email, data.password_raw);
     } catch (error) {
-      console.error('Signup failed:', error);
-      return null;
+      throw error;
     }
   }
 
@@ -72,44 +78,19 @@ class AuthService {
     const token = localStorage.getItem(AUTH_KEY);
     if (!token) return null;
 
-    try {
-      const response = await api.get('/auth/me');
-      return this.mapUser(response.data);
-    } catch (e) {
+    const user = this.mapUserFromToken(token);
+    if (!user) {
       this.logout();
       return null;
     }
+    return user;
   }
 
   async updateProfile(data: Partial<User>): Promise<User | null> {
-    try {
-      const response = await api.put('/auth/me', {
-        name: data.name,
-        email: data.email,
-        cpf: data.cpf,
-        phone: data.phone,
-        birthDate: data.birthDate,
-        address: data.address,
-        role: data.role,
-        password: 'REDACTED' // Backend UserRequest requires password at the moment, but the update endpoint doesn't actually use it for updating. I should check if I can make it optional on backend.
-      });
-      return this.mapUser(response.data);
-    } catch (error) {
-      console.error('Update profile failed:', error);
-      return null;
-    }
-  }
-
-  async finishTutorial(): Promise<User | null> {
-    console.log('[AuthService] Iniciando finishTutorial...');
-    try {
-      const response = await api.patch('/auth/me/finish-tutorial');
-      console.log('[AuthService] Resposta da API:', response.data);
-      return this.mapUser(response.data);
-    } catch (error) {
-      console.error('[AuthService] Erro na requisição PATCH:', error);
-      return null;
-    }
+    // Since /me is not available, we can only update profile if another endpoint exists.
+    // User README doesn't mention a PUT for profile yet.
+    console.warn('Profile update not implemented in backend.');
+    return null;
   }
 
   isAuthenticated(): boolean {
