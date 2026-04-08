@@ -33,16 +33,11 @@ const Explore: React.FC = () => {
         fetchBooks();
     }, []);
 
-    // Mock coordinates generator around São Luís for demo purposes
-    const getBookPosition = useCallback((index: number) => {
-        const angle = index * (360 / books.length);
-        const radius = 0.01 + (index % 2 === 0 ? 0.005 : 0);
-        return {
-            lat: center.lat + radius * Math.cos(angle * Math.PI / 180),
-            lng: center.lng + radius * Math.sin(angle * Math.PI / 180)
-        };
-    }, [books.length]);
-
+    // Real coordinates should come from the backend. 
+    // Books without latitude/longitude properties will be ignored by the map for now.
+    // Note: The 'Book' interface in types.ts doesn't have lat/lng currently.
+    // We would need to update the interface and backend to support this properly.
+    
     if (loading) {
         return (
             <Layout>
@@ -53,11 +48,9 @@ const Explore: React.FC = () => {
         );
     }
 
-    const markerPoints = books.map((book, i) => ({
-        id: book.id,
-        ...getBookPosition(i),
-        label: book.creditsCost.toString()
-    }));
+    // Since Books don't have lat/lng yet, markerPoints will be empty 
+    // until the data model is updated. No more mocked positions.
+    const markerPoints: any[] = [];
 
     return (
         <Layout>
@@ -69,17 +62,14 @@ const Explore: React.FC = () => {
                             <span className="material-symbols-outlined text-text-muted">search</span>
                             <input
                                 type="text"
-                                placeholder="Search in Maranhão..."
-                                className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold placeholder:text-text-muted/70 ml-2"
+                                placeholder="Buscar em São Luís..."
+                                className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold placeholder:text-text-muted/70 ml-2 outline-none"
                             />
                         </div>
-                        <button className="size-11 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-md rounded-2xl shadow-xl flex items-center justify-center border border-white/20">
-                            <span className="material-symbols-outlined text-text-main dark:text-white">tune</span>
-                        </button>
                     </div>
 
                     <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar pointer-events-auto">
-                        {['Near me', 'Available', 'Exchange', 'Free'].map((filter, i) => (
+                        {['Perto de mim', 'Disponível', 'Troca'].map((filter, i) => (
                             <button key={i} className={`px-4 py-1.5 rounded-full text-xs font-bold backdrop-blur-md border border-white/10 shadow-lg ${i === 0 ? 'bg-primary text-black' : 'bg-black/40 text-white'}`}>
                                 {filter}
                             </button>
@@ -106,9 +96,8 @@ const Explore: React.FC = () => {
                     {activeBook && (
                         <div className="bg-white/90 dark:bg-surface-dark/95 backdrop-blur-xl p-4 rounded-[24px] shadow-2xl border border-white/20 dark:border-white/5 flex gap-4 animate-in slide-in-from-bottom-10 fade-in duration-300">
                             <div className="size-20 rounded-xl overflow-hidden shadow-md shrink-0 relative">
-                                <img src={activeBook.photos[0]} className="w-full h-full object-cover" alt="" />
+                                <img src={activeBook.coverURL || 'https://picsum.photos/seed/book/200/300'} className="w-full h-full object-cover" alt="" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                                <span className="absolute bottom-1 right-1 text-[10px] font-bold text-white bg-black/50 px-1.5 rounded-md">{activeBook.distance}</span>
                             </div>
                             <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                                 <div>
@@ -118,7 +107,7 @@ const Explore: React.FC = () => {
 
                                 <div className="flex items-center gap-2 mt-2">
                                     <Link to={`/livro/${activeBook.id}`} className="flex-1 bg-primary text-black text-center py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform">
-                                        I want this!
+                                        Eu quero este!
                                     </Link>
                                     <button className="size-9 bg-[#F3F6F4] dark:bg-white/10 rounded-xl flex items-center justify-center text-text-muted">
                                         <span className="material-symbols-outlined text-[18px]">favorite</span>

@@ -11,20 +11,14 @@ const STEPS = [
     color: "bg-primary"
   },
   {
-    title: "Escaneie e registre livros",
-    description: "Use sua câmera para escanear o código ISBN e adicionar livros em segundos.",
+    title: "Registre seus livros",
+    description: "Adicione livros em segundos informando o título, autor e ISBN.",
     image: "https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&q=80&w=600",
     color: "bg-blue-400"
   },
   {
-    title: "Troque com confiança",
-    description: "Converse com usuários e organize trocas seguras em zonas verificadas.",
-    image: "https://images.unsplash.com/photo-1577985051167-0d49eec21977?auto=format&fit=crop&q=80&w=600",
-    color: "bg-purple-400"
-  },
-  {
-    title: "Ganhe créditos trocando",
-    description: "Troque livros que você já leu para ganhar créditos e descobrir sua próxima história favorita.",
+    title: "Troque histórias",
+    description: "Conecte-se com outros leitores e dê uma nova vida aos seus livros parados.",
     image: "https://images.unsplash.com/photo-1535905557558-afc4877a26fc?auto=format&fit=crop&q=80&w=600",
     color: "bg-emerald-400"
   }

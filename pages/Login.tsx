@@ -19,11 +19,16 @@ const Login: React.FC = () => {
       const result = await authService.login(email, password);
       if (result) {
         navigate('/home');
-      } else {
-        setError('E-mail ou senha incorretos.');
       }
-    } catch (err) {
-      setError('Ocorreu um erro na conexão com o servidor.');
+    } catch (err: any) {
+      console.error('Login Error Details:', err.response?.data || err.message);
+      if (err.response?.status === 409) {
+        setError(`Conflito no Servidor (409): ${err.response?.data?.message || 'Verifique seus dados ou se já está logado.'}`);
+      } else if (err.response?.status === 401) {
+        setError('E-mail ou senha incorretos.');
+      } else {
+        setError('Ocorreu um erro na conexão com o servidor. Tente novamente mais tarde.');
+      }
     } finally {
       setLoading(false);
     }

@@ -43,10 +43,6 @@ const Profile: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
-    const [cpf, setCpf] = useState('');
-    const [phone, setPhone] = useState('');
-    const [birthDate, setBirthDate] = useState('');
-    const [address, setAddress] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -61,10 +57,6 @@ const Profile: React.FC = () => {
                 setUser(currentUser);
                 setName(currentUser.name);
                 setEmail(currentUser.email);
-                setCpf(currentUser.cpf || '');
-                setPhone(currentUser.phone || '');
-                setBirthDate(currentUser.birthDate || '');
-                setAddress(currentUser.address || '');
             } else {
                 navigate('/login');
             }
@@ -82,10 +74,6 @@ const Profile: React.FC = () => {
             const updatedUser = await authService.updateProfile({
                 name,
                 email,
-                cpf,
-                phone,
-                birthDate,
-                address,
                 role: user?.role
             });
 
@@ -95,7 +83,7 @@ const Profile: React.FC = () => {
                 setMessage({ type: 'success', text: 'Perfil atualizado com sucesso!' });
                 setTimeout(() => setMessage(null), 3000);
             } else {
-                setMessage({ type: 'error', text: 'Erro ao atualizar perfil. Verifique os dados.' });
+                setMessage({ type: 'error', text: 'Erro ao atualizar perfil.' });
             }
         } catch (error) {
             console.error('Error updating profile:', error);
@@ -109,10 +97,6 @@ const Profile: React.FC = () => {
         if (user) {
             setName(user.name);
             setEmail(user.email);
-            setCpf(user.cpf || '');
-            setPhone(user.phone || '');
-            setBirthDate(user.birthDate || '');
-            setAddress(user.address || '');
         }
         setIsEditing(false);
         setMessage(null);
@@ -135,7 +119,7 @@ const Profile: React.FC = () => {
                 <header className="px-6 pt-12 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6 max-w-4xl mx-auto">
                     <div>
                         <h1 className="text-4xl font-extrabold tracking-tight dark:text-white mb-2">Meu Perfil</h1>
-                        <p className="text-text-muted font-medium">Gerencie suas informações pessoais e de conta</p>
+                        <p className="text-text-muted font-medium">Gerencie suas informações de conta</p>
                     </div>
                     {!isEditing && (
                         <button 
@@ -176,15 +160,13 @@ const Profile: React.FC = () => {
                                      <div className="flex flex-col md:flex-row items-center gap-10 relative z-10">
                                         <div className="relative">
                                             <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
-                                            <img 
-                                                src={user?.avatar || `https://picsum.photos/seed/${user?.id}/200`} 
-                                                className="size-40 rounded-[48px] object-cover border-4 border-white dark:border-surface-dark shadow-2xl relative z-10 rotate-3" 
-                                                alt="Profile" 
-                                            />
+                                            <div className="size-40 rounded-[48px] bg-primary/20 flex items-center justify-center border-4 border-white dark:border-surface-dark shadow-2xl relative z-10 rotate-3 text-primary text-5xl font-black uppercase">
+                                                {user?.name?.charAt(0) || ''}
+                                            </div>
                                         </div>
                                         <div className="text-center md:text-left">
                                             <p className="inline-block px-4 py-1.5 bg-primary/10 text-primary font-black text-xs rounded-full mb-3 uppercase tracking-widest">
-                                                {user?.role === 'REGULAR' ? 'Leitor' : user?.role}
+                                                {user?.role === 'USER' ? 'Leitor' : user?.role}
                                             </p>
                                             <h2 className="text-4xl font-black dark:text-white mb-1">{name}</h2>
                                             <p className="text-text-muted font-bold flex items-center justify-center md:justify-start gap-2">
@@ -197,12 +179,7 @@ const Profile: React.FC = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <InfoItem label="ID do Usuário" value={`#${user?.id || ''}`} icon="fingerprint" />
-                                    <InfoItem label="CPF" value={cpf} icon="badge" />
-                                    <InfoItem label="Telefone" value={phone} icon="phone" />
-                                    <InfoItem label="Data de Nascimento" value={birthDate} icon="calendar_today" />
-                                    <div className="md:col-span-2">
-                                        <InfoItem label="Endereço" value={address} icon="home" />
-                                    </div>
+                                    <InfoItem label="E-mail de Contato" value={email} icon="alternate_email" />
                                 </div>
                             </div>
                         ) : (
@@ -212,15 +189,10 @@ const Profile: React.FC = () => {
 
                                 <form onSubmit={handleSave} className="space-y-10 z-10 relative">
                                     <div className="flex flex-col items-center mb-4">
-                                        <div className="relative group cursor-pointer">
-                                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-colors animate-pulse"></div>
-                                            <img 
-                                                src={user?.avatar || `https://picsum.photos/seed/${user?.id}/200`} 
-                                                className="size-32 rounded-full object-cover border-4 border-white dark:border-surface-dark shadow-2xl relative z-10" 
-                                                alt="Profile" 
-                                            />
-                                            <div className="absolute bottom-0 right-0 size-10 bg-primary text-black rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all z-20 hover:bg-[#0fd651]">
-                                                <span className="material-symbols-outlined text-xl">photo_camera</span>
+                                        <div className="relative group">
+                                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
+                                            <div className="size-32 rounded-full bg-primary/10 flex items-center justify-center border-4 border-white dark:border-surface-dark shadow-2xl relative z-10 text-primary text-4xl font-black uppercase">
+                                                {user?.name?.charAt(0) || ''}
                                             </div>
                                         </div>
                                     </div>
@@ -231,14 +203,7 @@ const Profile: React.FC = () => {
                                         </div>
                                         <EditField label="Nome Completo" value={name} icon="person" required onChange={setName} />
                                         <EditField label="E-mail" value={email} icon="mail" disabled />
-                                        <EditField label="CPF" value={cpf} icon="badge" placeholder="000.000.000-00" onChange={setCpf} />
-                                        <EditField label="Telefone" value={phone} icon="phone" placeholder="(00) 00000-0000" onChange={setPhone} />
-                                        <EditField label="Data de Nascimento" value={birthDate} icon="calendar_today" type="date" onChange={setBirthDate} />
                                         <EditField label="Tipo de Perfil" value={user?.role || ''} icon="category" disabled />
-                                    </div>
-
-                                    <div className="w-full">
-                                        <EditField label="Endereço" value={address} icon="home" placeholder="Seu endereço completo" onChange={setAddress} />
                                     </div>
 
                                     <div className="pt-6 flex flex-col md:flex-row gap-4">

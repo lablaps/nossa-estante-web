@@ -59,45 +59,32 @@ const MyShelf: React.FC = () => {
           {/* User Profile Card */}
           <div className="bg-white dark:bg-surface-dark p-8 rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm flex flex-col md:flex-row items-center gap-8 group">
             <div className="relative">
-              <img
-                src={user?.avatar || 'https://picsum.photos/seed/user/200'}
-                className="size-24 rounded-full object-cover border-4 border-primary/20 p-1 group-hover:scale-105 transition-transform"
-                alt="Profile"
-              />
+              <div className="size-24 rounded-full bg-primary/20 flex items-center justify-center border-4 border-white dark:border-surface-dark shadow-xl text-primary text-3xl font-black uppercase overflow-hidden">
+                {user?.name?.charAt(0) || ''}
+              </div>
               <div className="absolute -bottom-1 -right-1 size-8 bg-primary rounded-xl flex items-center justify-center text-black border-2 border-white dark:border-surface-dark">
                 <span className="material-symbols-outlined text-[18px] filled">verified</span>
               </div>
             </div>
             <div className="flex-1 text-center md:text-left space-y-1">
-              <h2 className="text-2xl font-black dark:text-white">{user?.name}</h2>
-              <p className="text-text-muted font-bold text-sm">{user?.email}</p>
+              <h2 className="text-2xl font-black dark:text-white">{user?.name || ''}</h2>
+              <p className="text-text-muted font-bold text-sm">{user?.email || ''}</p>
               <div className="flex items-center justify-center md:justify-start gap-4 mt-3">
                 <div className="flex items-center gap-1.5 px-3 py-1 bg-[#F0FDF4] text-[#166534] rounded-full text-xs font-black">
-                  <span className="material-symbols-outlined text-sm filled">star</span>
-                  {user?.reputation || '5.0'} Reputação
+                  <span className="material-symbols-outlined text-sm filled">check_circle</span>
+                  Membro Verificado
                 </div>
-                <div className="text-text-muted text-xs font-bold">•</div>
-                <div className="text-text-muted text-xs font-bold">Membro desde 2024</div>
-              </div>
-            </div>
-            <div className="h-12 w-px bg-black/5 dark:bg-white/5 hidden md:block" />
-            <div className="text-center md:text-right">
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Saldo Atual</p>
-              <div className="flex items-center gap-2 text-primary">
-                <span className="text-3xl font-black">{user?.credits || 0}</span>
-                <span className="material-symbols-outlined text-3xl filled">token</span>
               </div>
             </div>
           </div>
         </header>
 
         {/* Dashboard Mini Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
-            { label: 'Total na Comunidade', val: myBooks.length, icon: 'auto_stories', color: 'bg-blue-500' },
+            { label: 'Total na Coleção', val: myBooks.length, icon: 'auto_stories', color: 'bg-blue-500' },
             { label: 'Livros Disponíveis', val: myBooks.filter(b => b.status === 'Available').length, icon: 'check_circle', color: 'bg-primary' },
             { label: 'Em Troca', val: myBooks.filter(b => b.status === 'In Exchange').length, icon: 'swap_horiz', color: 'bg-amber-500' },
-            { label: 'Créditos Ganhos', val: 12, icon: 'token', color: 'bg-emerald-500' },
           ].map((stat, i) => (
             <div key={i} className="bg-white dark:bg-surface-dark p-6 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm flex items-center gap-5">
               <div className={`size-12 ${stat.color} rounded-2xl flex items-center justify-center text-white shadow-lg`}>
@@ -135,8 +122,14 @@ const MyShelf: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
               {filteredBooks.map(book => (
                 <div key={book.id} className="group cursor-pointer">
-                  <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-xl mb-4 group-hover:-translate-y-2 transition-all duration-500 ring-1 ring-black/5">
-                    <img src={book.photos[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                  <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-xl mb-4 group-hover:-translate-y-2 transition-all duration-500 ring-1 ring-black/5 bg-gray-100 dark:bg-surface-dark">
+                    {book.coverURL ? (
+                      <img src={book.coverURL} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-white/5 opacity-40">
+                        <span className="material-symbols-outlined text-5xl">book</span>
+                      </div>
+                    )}
                     <div className={`absolute top-4 left-4 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg ${book.status === 'Available' ? 'bg-primary text-black' : 'bg-amber-400 text-amber-950'
                       }`}>
                       {book.status === 'Available' ? 'Disponível' : 'Em Troca'}
