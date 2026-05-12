@@ -1,5 +1,6 @@
 import React from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import AuthModal from './components/auth/AuthModal';
 import Onboarding from './pages/Onboarding';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -9,40 +10,26 @@ import AddBook from './pages/AddBook';
 import BookDetails from './pages/BookDetails';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
-import { authService } from './services/authService';
-
-const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const navigate = useNavigate();
-  const [isAuth, setIsAuth] = React.useState<boolean | null>(null);
-
-  React.useEffect(() => {
-    const authenticated = authService.isAuthenticated();
-    setIsAuth(authenticated);
-    if (!authenticated) {
-      navigate('/login', { replace: true });
-    }
-  }, [navigate]);
-
-  if (isAuth === null) return null; // Prevent flicker or early render
-  return isAuth ? <>{children}</> : null;
-};
 
 const App: React.FC = () => {
   return (
-    <Routes>
-      <Route path="/" element={<PrivateRoute><Navigate to="/home" replace /></PrivateRoute>} />
-      <Route path="/intro" element={<Onboarding />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
-      <Route path="/explore" element={<PrivateRoute><Explore /></PrivateRoute>} />
-      <Route path="/minha-estante" element={<PrivateRoute><MyShelf /></PrivateRoute>} />
-      <Route path="/cadastrar-livro" element={<PrivateRoute><AddBook /></PrivateRoute>} />
-      <Route path="/livro/:id" element={<PrivateRoute><BookDetails /></PrivateRoute>} />
-      <Route path="/meu-perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/intro" element={<Onboarding />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/minha-estante" element={<MyShelf />} />
+        <Route path="/cadastrar-livro" element={<AddBook />} />
+        <Route path="/livro/:id" element={<BookDetails />} />
+        <Route path="/meu-perfil" element={<Profile />} />
+        <Route path="*" element={<Navigate to="/home" replace />} />
+      </Routes>
+      <AuthModal />
+    </>
   );
 };
 
-export default App;
+export default App;

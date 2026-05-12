@@ -19,7 +19,7 @@ const Layout: React.FC<{ children: React.ReactNode; hideBottomNav?: boolean }> =
 
   const handleLogout = () => {
     authService.logout();
-    navigate('/login');
+    navigate('/home');
   };
 
   const navItems = [
@@ -29,8 +29,6 @@ const Layout: React.FC<{ children: React.ReactNode; hideBottomNav?: boolean }> =
     { path: '/minha-estante', icon: 'auto_stories', label: 'Minha Estante' },
     { path: '/meu-perfil', icon: 'person', label: 'Meu Perfil' },
   ];
-
-  if (!user) return null;
 
   return (
     <div className="flex min-h-screen bg-[#F8FAF9] dark:bg-background-dark text-text-main transition-colors duration-300">
@@ -63,13 +61,15 @@ const Layout: React.FC<{ children: React.ReactNode; hideBottomNav?: boolean }> =
             </NavLink>
           ))}
 
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold transition-all text-text-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/10 dark:hover:text-red-400 mt-auto mb-6"
-          >
-            <span className="material-symbols-outlined text-[22px]">logout</span>
-            <span className="text-sm">Sair</span>
-          </button>
+          {user && (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold transition-all text-text-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/10 dark:hover:text-red-400 mt-auto mb-6"
+            >
+              <span className="material-symbols-outlined text-[22px]">logout</span>
+              <span className="text-sm">Sair</span>
+            </button>
+          )}
         </nav>
       </aside>
 

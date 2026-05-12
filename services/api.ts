@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { API_BASE_URL } from '../.env';
+import { API_BASE_URL } from '../env';
 
 
 const api = axios.create({
@@ -43,7 +43,6 @@ api.interceptors.response.use(
         } catch (refreshError) {
           localStorage.removeItem('ns_auth_token');
           localStorage.removeItem('ns_refresh_token');
-          window.location.href = '/login';
           return Promise.reject(refreshError);
         }
       }

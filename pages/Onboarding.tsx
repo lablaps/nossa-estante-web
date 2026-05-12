@@ -32,11 +32,11 @@ const Onboarding: React.FC = () => {
     if (step < STEPS.length - 1) {
       setStep(step + 1);
     } else {
-      navigate('/login');
+      navigate('/home');
     }
   };
 
-  const handleSkip = () => navigate('/login');
+  const handleSkip = () => navigate('/home');
 
   return (
     <div className="h-screen bg-background-light dark:bg-background-dark flex flex-col overflow-hidden">

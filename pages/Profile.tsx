@@ -57,8 +57,6 @@ const Profile: React.FC = () => {
                 setUser(currentUser);
                 setName(currentUser.name);
                 setEmail(currentUser.email);
-            } else {
-                navigate('/login');
             }
             setIsLoading(false);
         };
