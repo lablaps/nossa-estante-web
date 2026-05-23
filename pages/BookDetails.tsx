@@ -49,8 +49,8 @@ const BookDetails: React.FC = () => {
   const handleRedeem = async () => {
     if (!user || !book) return;
     try {
-      await dbService.createTrade(book.id, book.ownerId);
-      navigate('/minha-estante'); // Navigate to my shelf or exchanges list
+      const trade = await dbService.createTrade(book.id, book.ownerId);
+      navigate(`/troca/${trade.id}`);
     } catch (error) {
       console.error('Error creating trade:', error);
       alert('Erro ao resgatar livro. Tente novamente.');
@@ -162,10 +162,9 @@ const BookDetails: React.FC = () => {
                 )}
               </div>
 
-              {/* Owner Info - Simplified as backend doesn't provide full owner details in book response easily */}
               <div className="p-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20">
-                <p className="text-[10px] uppercase font-bold text-primary/70 tracking-tighter leading-none">ID do Proprietário</p>
-                <p className="text-lg font-black dark:text-white">{book.ownerId || 'Indisponível'}</p>
+                <p className="text-[10px] uppercase font-bold text-primary/70 tracking-tighter leading-none">Proprietário</p>
+                <p className="text-lg font-black dark:text-white">{book.ownerName || book.ownerId || 'Indisponível'}</p>
               </div>
 
               {/* Synopsis Section */}
@@ -194,9 +193,10 @@ const BookDetails: React.FC = () => {
             
             <button
               onClick={handleRedeem}
+              disabled={!user || user.id === book.ownerId || book.status !== 'Available'}
               className="px-10 py-5 bg-primary text-text-main font-black rounded-2xl shadow-lg shadow-primary/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
             >
-              <span>RESGATAR AGORA</span>
+              <span>{user?.id === book.ownerId ? 'SEU LIVRO' : book.status === 'Available' ? 'RESGATAR AGORA' : 'INDISPONÍVEL'}</span>
               <span className="material-symbols-outlined text-xl">keyboard_double_arrow_right</span>
             </button>
           </div>

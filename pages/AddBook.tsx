@@ -90,6 +90,7 @@ const AddBook: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFetchingBook, setIsFetchingBook] = useState(false);
+  const [isbnMessage, setIsbnMessage] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -126,55 +127,56 @@ const AddBook: React.FC = () => {
     fetchUser();
   }, []);
 
+  const fillBookFromISBN = async (isbn: string) => {
+    const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+
+    if (cleanIsbn.length !== 10 && cleanIsbn.length !== 13) {
+      setIsbnMessage('');
+      return;
+    }
+
+    setIsFetchingBook(true);
+    setIsbnMessage('');
+
+    try {
+      const bookInfo = await bookService.fetchBookByISBN(cleanIsbn);
+      if (!bookInfo) {
+        setIsbnMessage('ISBN não encontrado. Preencha manualmente.');
+        return;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        title: bookInfo.title || prev.title,
+        author: bookInfo.authors.length > 0 ? bookInfo.authors.join(', ') : prev.author,
+        pages: bookInfo.pageCount?.toString() || prev.pages,
+        synopses: bookInfo.description || prev.synopses,
+        language: bookInfo.language === 'en' ? 'Inglês' : (bookInfo.language === 'pt' || bookInfo.language === 'pt-BR' ? 'Português' : prev.language),
+        publisher: bookInfo.publisher || prev.publisher,
+        publishedDate: bookInfo.publishedDate || prev.publishedDate,
+        coverURL: bookInfo.thumbnail || prev.coverURL,
+        pageCount: bookInfo.pageCount || prev.pageCount,
+        isbn10: cleanIsbn.length === 10 ? cleanIsbn : prev.isbn10,
+        isbn13: cleanIsbn.length === 13 ? cleanIsbn : prev.isbn13,
+        edition: bookInfo.edition || prev.edition,
+        publishPlace: bookInfo.publishPlace || prev.publishPlace,
+        physicalFormat: bookInfo.physicalFormat || prev.physicalFormat,
+      }));
+      setIsbnMessage('Dados preenchidos automaticamente.');
+    } catch (error) {
+      console.error('Dynamic lookup failed:', error);
+      setIsbnMessage('Erro ao buscar ISBN. Tente novamente.');
+    } finally {
+      setIsFetchingBook(false);
+    }
+  };
+
   const handleISBNChange = async (isbn: string) => {
     setFormData(prev => ({ ...prev, isbn }));
 
-    // Auto-fetch if ISBN looks complete (10 or 13 chars)
     const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
     if ((cleanIsbn.length === 10 || cleanIsbn.length === 13) && !isFetchingBook) {
-      setIsFetchingBook(true);
-      try {
-        const bookInfo = await bookService.fetchBookByISBN(cleanIsbn);
-        if (bookInfo) {
-          setFormData(prev => {
-            const categoryMap: Record<string, string> = {
-              'Fiction': 'Ficção',
-              'Non-fiction': 'Não-Ficção',
-              'Self-help': 'Autoajuda',
-              'Business': 'Negócios',
-              'Juvenile fiction': 'Infantil',
-              'Fantasy': 'Fantasia',
-              'Horror': 'Terror',
-              'Romance': 'Romance'
-            };
-
-            return {
-              ...prev,
-              title: bookInfo.title || prev.title,
-              author: bookInfo.authors.length > 0 ? bookInfo.authors.join(', ') : prev.author,
-              pages: bookInfo.pageCount?.toString() || prev.pages,
-              synopses: bookInfo.description || prev.synopses,
-              // Gender is now handled manually
-              language: bookInfo.language === 'en' ? 'Inglês' : (bookInfo.language === 'pt' ? 'Português' : prev.language),
-              publisher: bookInfo.publisher || prev.publisher,
-              publishedDate: bookInfo.publishedDate || prev.publishedDate,
-              coverURL: bookInfo.thumbnail || prev.coverURL,
-              pageCount: bookInfo.pageCount || prev.pageCount,
-              isbn10: cleanIsbn.length === 10 ? cleanIsbn : prev.isbn10,
-              isbn13: cleanIsbn.length === 13 ? cleanIsbn : prev.isbn13,
-              edition: bookInfo.edition || prev.edition,
-              publishPlace: bookInfo.publishPlace || prev.publishPlace,
-              physicalFormat: bookInfo.physicalFormat || prev.physicalFormat,
-              // Only fill contributors if the API actually has contributor info (not just authors)
-              contributors: prev.contributors 
-            };
-          });
-        }
-      } catch (error) {
-        console.error('Dynamic lookup failed:', error);
-      } finally {
-        setIsFetchingBook(false);
-      }
+      await fillBookFromISBN(cleanIsbn);
     }
   };
 
@@ -200,11 +202,12 @@ const AddBook: React.FC = () => {
     }
 
     try {
+      const cleanIsbn = formData.isbn.replace(/[^0-9X]/gi, '');
       const newBook: Partial<Book> = {
         title: formData.title,
         author: formData.author,
-        isbn10: formData.isbn10 || (formData.isbn.length === 10 ? formData.isbn : ''),
-        isbn13: formData.isbn13 || (formData.isbn.length === 13 ? formData.isbn : ''),
+        isbn10: formData.isbn10 || (cleanIsbn.length === 10 ? cleanIsbn : ''),
+        isbn13: formData.isbn13 || (cleanIsbn.length === 13 ? cleanIsbn : ''),
         gender: formData.gender,
         language: formData.language,
         ownerId: user.id || '',
@@ -264,13 +267,28 @@ const AddBook: React.FC = () => {
             value={formData.isbn}
             onChange={handleISBNChange}
             placeholder="Digite o código ISBN (ex: 9780132350884)"
-            extra={isFetchingBook && (
-              <div className="flex items-center gap-2 text-primary animate-pulse">
-                <div className="size-3 border-2 border-primary/30 border-t-primary animate-spin rounded-full"></div>
-                <span className="text-[10px] font-black uppercase tracking-widest">Buscando...</span>
-              </div>
-            )}
+            extra={
+              isFetchingBook ? (
+                <div className="flex items-center gap-2 text-primary animate-pulse">
+                  <div className="size-3 border-2 border-primary/30 border-t-primary animate-spin rounded-full"></div>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Buscando...</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fillBookFromISBN(formData.isbn)}
+                  className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+                >
+                  Buscar
+                </button>
+              )
+            }
           />
+          {isbnMessage && (
+            <p className={`px-2 text-xs font-bold ${isbnMessage.includes('preenchidos') ? 'text-primary' : 'text-amber-600'}`}>
+              {isbnMessage}
+            </p>
+          )}
 
           <div className="space-y-4">
             <div className="space-y-4">

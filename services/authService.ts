@@ -28,7 +28,20 @@ class AuthService {
       id: '0', // Placeholder or extract if present in claims
       name: email.split('@')[0], // Using email prefix as name since backend doesn't provide it on login
       email: email,
-      role: payload.role
+      role: payload.role,
+      credits: 0,
+      reputation: 0
+    };
+  }
+
+  private mapUser(data: any): User {
+    return {
+      id: data.id?.toString() || '0',
+      name: data.name || '',
+      email: data.email || '',
+      role: data.role,
+      credits: 0,
+      reputation: 0
     };
   }
 
@@ -78,19 +91,28 @@ class AuthService {
     const token = localStorage.getItem(AUTH_KEY);
     if (!token) return null;
 
-    const user = this.mapUserFromToken(token);
-    if (!user) {
-      this.logout();
-      return null;
+    try {
+      const response = await api.get('/users/me');
+      return this.mapUser(response.data);
+    } catch (error) {
+      const user = this.mapUserFromToken(token);
+      if (!user) {
+        this.logout();
+        return null;
+      }
+      return user;
     }
-    return user;
   }
 
   async updateProfile(data: Partial<User>): Promise<User | null> {
-    // Since /me is not available, we can only update profile if another endpoint exists.
-    // User README doesn't mention a PUT for profile yet.
-    console.warn('Profile update not implemented in backend.');
-    return null;
+    const response = await api.put('/users/me', {
+      name: data.name
+    });
+    return this.mapUser(response.data);
+  }
+
+  async finishTutorial(): Promise<void> {
+    localStorage.setItem('ns_tutorial_finished', 'true');
   }
 
   isAuthenticated(): boolean {

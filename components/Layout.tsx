@@ -27,6 +27,8 @@ const Layout: React.FC<{ children: React.ReactNode; hideBottomNav?: boolean }> =
     { path: '/explore', icon: 'map', label: 'Explorar' },
     { path: '/cadastrar-livro', icon: 'add', label: 'Cadastrar Livro' },
     { path: '/minha-estante', icon: 'auto_stories', label: 'Minha Estante' },
+    { path: '/trocas', icon: 'swap_horiz', label: 'Trocas' },
+    { path: '/chats', icon: 'chat', label: 'Chat' },
     { path: '/meu-perfil', icon: 'person', label: 'Meu Perfil' },
   ];
 
@@ -104,9 +106,9 @@ const Layout: React.FC<{ children: React.ReactNode; hideBottomNav?: boolean }> =
               <span className="text-[10px] font-bold">Minha Estante</span>
             </NavLink>
 
-            <NavLink id="nav-meu-perfil-mobile" to="/meu-perfil" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-text-muted'}`}>
-              <span className={`material-symbols-outlined text-[26px] ${location.pathname === '/meu-perfil' ? 'filled' : ''}`}>person</span>
-              <span className="text-[10px] font-bold">Perfil</span>
+            <NavLink id="nav-trocas-mobile" to="/trocas" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-text-muted'}`}>
+              <span className={`material-symbols-outlined text-[26px] ${location.pathname.startsWith('/troca') ? 'filled' : ''}`}>swap_horiz</span>
+              <span className="text-[10px] font-bold">Trocas</span>
             </NavLink>
 
           </nav>

@@ -4,6 +4,9 @@ export interface User {
   name: string;
   email: string;
   role?: string;
+  credits?: number;
+  reputation?: number;
+  avatar?: string;
 }
 
 export type BookStatus = 'Available' | 'In Exchange' | 'Pending' | 'Exchanged';
@@ -17,6 +20,7 @@ export interface Book {
   gender: string;
   language: string;
   ownerId: string;
+  ownerName?: string;
   status: string;
   material_state: string;
   cost: number;
@@ -33,9 +37,53 @@ export interface Book {
 
 export interface Trade {
   id: string;
-  book: Book;
-  from_user: User;
-  to_user: User;
+  bookId: string;
+  bookTitle: string;
+  fromUserId: string;
+  fromUserName: string;
+  fromUserPhone?: string;
+  toUserId: string;
+  toUserName: string;
+  toUserPhone?: string;
+  status: string;
+  meetingPoint: string;
+  statusA?: boolean;
+  statusB?: boolean;
+  statusTotal?: boolean;
+  bookAId?: string;
+  bookBId?: string;
+  bookATitle?: string;
+  bookBTitle?: string;
+  book?: Book;
+  from_user?: User;
+  to_user?: User;
+}
+
+export interface TradeUpdateDTO {
+  status_a: boolean;
+  status_b: boolean;
+  book_a_id: number;
+  book_b_id: number;
+}
+
+export interface Message {
+  id: string;
+  fromUserId: string;
+  text: string;
+  date: string;
+}
+
+export interface ChatThread {
+  tradeId: string;
+  messages: Message[];
+}
+
+export interface Transaction {
+  id: string;
+  description: string;
+  date: string;
+  amount: number;
+  type: 'earn' | 'spend';
 }
 
 export interface BookRequestDTO {

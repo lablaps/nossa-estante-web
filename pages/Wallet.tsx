@@ -1,13 +1,23 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { dbService } from '../services/dbService';
 import { authService } from '../services/authService';
 import Layout from '../components/Layout';
 import ReferenceButtons from '../components/ReferenceButtons';
+import { Transaction, User } from '../types';
 
 const Wallet: React.FC = () => {
-  const user = authService.getCurrentUser();
-  const transactions = user ? dbService.getTransactions(user.id) : [];
+  const [user, setUser] = useState<User | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+      setTransactions(currentUser ? await dbService.getTransactions() : []);
+    };
+    load();
+  }, []);
 
   return (
     <Layout>
@@ -33,7 +43,7 @@ const Wallet: React.FC = () => {
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-white/50 uppercase tracking-widest">Saldo Disponível</p>
                   <h2 className="text-6xl font-black flex items-center gap-4">
-                    {user?.credits}
+                    {user?.credits ?? 0}
                     <span className="material-symbols-outlined text-primary text-4xl filled">token</span>
                   </h2>
                 </div>
@@ -57,7 +67,9 @@ const Wallet: React.FC = () => {
 
           <div className="bg-white dark:bg-surface-dark rounded-[40px] p-10 border border-black/5 shadow-xl space-y-8">
             <div className="flex items-center gap-6">
-              <img src={user?.avatar} className="size-20 rounded-[30px] object-cover border-4 border-[#F8FAF9] dark:border-background-dark shadow-xl" alt="" />
+              <div className="size-20 rounded-[30px] bg-primary/15 flex items-center justify-center border-4 border-[#F8FAF9] dark:border-background-dark shadow-xl text-primary text-2xl font-black uppercase">
+                {user?.name?.charAt(0) || 'N'}
+              </div>
               <div>
                 <h3 className="text-xl font-black dark:text-white">{user?.name}</h3>
                 <p className="text-xs text-text-muted font-bold">Membro Verificado</p>
@@ -68,7 +80,7 @@ const Wallet: React.FC = () => {
               <div className="flex justify-between items-end">
                 <div>
                   <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Pontuação de Reputação</p>
-                  <p className="text-4xl font-black dark:text-white">{user?.reputation}</p>
+                  <p className="text-4xl font-black dark:text-white">{user?.reputation ?? 0}</p>
                 </div>
               </div>
               <div className="w-full h-3 bg-black/5 rounded-full overflow-hidden">

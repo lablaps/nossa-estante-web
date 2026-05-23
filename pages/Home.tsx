@@ -162,26 +162,21 @@ const Home: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-[24px] bg-[#101614] p-4 text-white shadow-xl">
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Acervo aberto</p>
-                  <p className="mt-3 text-3xl font-black">{books.length}+</p>
-                  <p className="mt-1 text-sm text-white/72">titulos disponiveis para explorar</p>
-                </div>
-                <div className="rounded-[24px] bg-[#101614] p-4 text-white shadow-xl">
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Perto de voce</p>
-                  <p className="mt-3 text-3xl font-black">{nearbyBooks.length}+</p>
-                  <p className="mt-1 text-sm text-white/72">livros sugeridos por proximidade</p>
-                </div>
-                <div className="rounded-[24px] bg-[#101614] p-4 text-white shadow-xl">
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Categorias</p>
-                  <p className="mt-3 text-3xl font-black">{categoryLabels.length}</p>
-                  <p className="mt-1 text-sm text-white/72">frentes para comecar sua busca</p>
-                </div>
-                <div className="rounded-[24px] bg-[#101614] p-4 text-white shadow-xl">
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Comunidade</p>
-                  <p className="mt-3 text-3xl font-black">{user ? 'On' : 'Livre'}</p>
-                  <p className="mt-1 text-sm text-white/72">entre quando quiser participar das trocas</p>
-                </div>
+                {[
+                  { label: 'Acervo aberto', value: `${books.length}+`, text: 'titulos disponiveis para explorar', icon: 'auto_stories' },
+                  { label: 'Perto de voce', value: `${nearbyBooks.length}+`, text: 'livros sugeridos por proximidade', icon: 'near_me' },
+                  { label: 'Categorias', value: categoryLabels.length, text: 'frentes para comecar sua busca', icon: 'category' },
+                  { label: 'Comunidade', value: user ? 'On' : 'Livre', text: 'entre quando quiser participar das trocas', icon: 'groups' },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-[24px] border border-primary/12 bg-primary/7 p-4 shadow-sm">
+                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                      <span className="material-symbols-outlined text-[20px]">{stat.icon}</span>
+                    </div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">{stat.label}</p>
+                    <p className="mt-3 text-3xl font-black text-text-main">{stat.value}</p>
+                    <p className="mt-1 text-sm text-text-muted">{stat.text}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </section>
