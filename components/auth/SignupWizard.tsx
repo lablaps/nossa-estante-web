@@ -41,6 +41,16 @@ const EXCHANGE_GOALS = [
 
 const STEP_TITLES = ['Acesso', 'Perfil', 'Interesses', 'Conta'];
 
+const formatPhone = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length <= 2) return digits ? `(${digits}` : '';
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
+
 type SignupWizardProps = {
   onSuccess: () => void;
   onSwitchToLogin: () => void;
@@ -106,13 +116,17 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
   };
 
   const canContinue = () => {
-    if (step === 0) return phone.trim().length > 0;
+    if (step === 0) return phone.replace(/\D/g, '').length >= 10;
     if (step === 1) return name.trim().length > 0 && city.trim().length > 0;
     if (step === 2) return categories.length > 0 && goals.length > 0;
     if (step === 3) {
       return email.trim().length > 0 && password.trim().length >= 6 && password === confirmPassword;
     }
     return true;
+  };
+
+  const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPhone(formatPhone(event.target.value));
   };
 
   const handleNext = async () => {
@@ -137,7 +151,7 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
         name,
         email,
         password_raw: password,
-        role: 'REGULAR',
+        role: 'ADMIN',
       });
 
       if (result) {
@@ -170,10 +184,12 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
           <span className="material-symbols-outlined absolute left-5 text-primary text-2xl">smartphone</span>
           <input
             type="tel"
+            inputMode="numeric"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={handlePhoneChange}
             className="w-full pl-14 pr-5 py-5 rounded-3xl border-0 ring-1 ring-black/5 bg-[#F8FAF9] shadow-sm focus:ring-4 focus:ring-primary/20 outline-none text-lg text-text-main transition-all"
             placeholder="(98) 99999-9999"
+            maxLength={15}
           />
         </div>
       </div>

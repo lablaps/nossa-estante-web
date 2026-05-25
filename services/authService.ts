@@ -67,8 +67,6 @@ class AuthService {
 
   async signup(data: { name: string; email: string; password_raw: string; role: string }): Promise<{ token: string; user: User } | null> {
     try {
-      // In register response, the backend returns UserResponse with the real name.
-      // But we call login afterwards to get the token.
       await api.post('/auth/register', {
         name: data.name,
         email: data.email,
@@ -76,7 +74,21 @@ class AuthService {
         role: data.role
       });
 
-      return this.login(data.email, data.password_raw);
+      try {
+        return await this.login(data.email, data.password_raw);
+      } catch (error) {
+        return {
+          token: '',
+          user: {
+            id: '0',
+            name: data.name,
+            email: data.email,
+            role: data.role,
+            credits: 0,
+            reputation: 0
+          }
+        };
+      }
     } catch (error) {
       throw error;
     }
@@ -91,17 +103,13 @@ class AuthService {
     const token = localStorage.getItem(AUTH_KEY);
     if (!token) return null;
 
-    try {
-      const response = await api.get('/users/me');
-      return this.mapUser(response.data);
-    } catch (error) {
-      const user = this.mapUserFromToken(token);
-      if (!user) {
-        this.logout();
-        return null;
-      }
-      return user;
+    const user = this.mapUserFromToken(token);
+    if (!user) {
+      this.logout();
+      return null;
     }
+
+    return user;
   }
 
   async updateProfile(data: Partial<User>): Promise<User | null> {

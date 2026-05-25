@@ -5,9 +5,27 @@ import { Book, Trade, BookRequestDTO, ChatThread, Message, Transaction, TradeUpd
 class DBService {
   // Users - No direct /users endpoints found in backend, but keep placeholders if needed or remove
   // For now, let's keep them commented out if they are not used, or remove them as per instruction
+
+  private parseUserString(value?: string) {
+    if (!value) return {};
+
+    const id = value.match(/id=([^,\)]+)/)?.[1]?.trim();
+    const name = value.match(/name=([^,\)]+)/)?.[1]?.trim();
+    const email = value.match(/email=([^,\)]+)/)?.[1]?.trim().toLowerCase();
+
+    return { id, name, email };
+  }
+
+  private formatOwnerName(value?: string) {
+    if (!value) return '';
+    return value.includes('@') ? value.toLowerCase() : value;
+  }
   
   private mapBook(b: any): Book {
     b = this.unwrapEntity(b);
+    const userText = typeof b.user === 'string' ? this.parseUserString(b.user) : {};
+    const ownerText = typeof b.ownerName === 'string' ? this.parseUserString(b.ownerName) : {};
+    const ownerName = this.formatOwnerName(b.user?.name || ownerText.name || ownerText.email || userText.name || userText.email || b.ownerName || '');
 
     return {
       id: b.id?.toString() || '',
@@ -17,8 +35,8 @@ class DBService {
       isbn13: b.isbn13,
       gender: b.gender || '',
       language: b.language || '',
-      ownerId: b.user?.id?.toString() || b.userId?.toString() || b.ownerId?.toString() || '',
-      ownerName: b.ownerName || b.user?.name || (typeof b.user === 'string' ? b.user : ''),
+      ownerId: b.user?.id?.toString() || b.userId?.toString() || b.ownerId?.toString() || ownerText.id || userText.id || '',
+      ownerName,
       status: b.status || '',
       material_state: b.material_state || '',
       cost: Number(b.cost) || 0,
@@ -144,18 +162,22 @@ class DBService {
 
   private mapTrade(raw: any): Trade {
     const t = this.unwrapEntity(raw);
+    const fromUserText = typeof t.from_user === 'string' ? this.parseUserString(t.from_user) : {};
+    const toUserText = typeof t.to_user === 'string' ? this.parseUserString(t.to_user) : {};
     const bookBId = t.bookBId?.toString() || t.book_b_id?.toString() || t.bookId?.toString() || t.book_id?.toString() || '';
     const bookAId = t.bookAId?.toString() || t.book_a_id?.toString() || '';
+    const fromUserName = this.formatOwnerName(t.fromUserName || fromUserText.name || fromUserText.email || t.from_user || '');
+    const toUserName = this.formatOwnerName(t.toUserName || toUserText.name || toUserText.email || t.to_user || '');
 
     return {
       id: t.id?.toString() || '',
       bookId: bookBId,
-      bookTitle: t.bookTitle || t.book_b || '',
-      fromUserId: t.fromUserId?.toString() || t.from_user_id?.toString() || '',
-      fromUserName: t.fromUserName || t.from_user || '',
+      bookTitle: t.bookTitle || t.book_b_title || t.book_b || '',
+      fromUserId: t.fromUserId?.toString() || t.from_user_id?.toString() || fromUserText.id || '',
+      fromUserName,
       fromUserPhone: t.fromUserPhone || t.from_user_phone || t.fromPhone || '',
-      toUserId: t.toUserId?.toString() || t.to_user_id?.toString() || '',
-      toUserName: t.toUserName || t.to_user || '',
+      toUserId: t.toUserId?.toString() || t.to_user_id?.toString() || toUserText.id || '',
+      toUserName,
       toUserPhone: t.toUserPhone || t.to_user_phone || t.toPhone || '',
       status: t.status || (t.status_total ? 'ACCEPTED' : 'OPEN'),
       meetingPoint: t.meetingPoint || 'A combinar'
@@ -165,8 +187,8 @@ class DBService {
       statusTotal: Boolean(t.statusTotal ?? t.status_total),
       bookAId,
       bookBId,
-      bookATitle: t.bookATitle || t.book_a || '',
-      bookBTitle: t.bookBTitle || t.book_b || t.bookTitle || ''
+      bookATitle: t.bookATitle || t.book_a_title || t.book_a || '',
+      bookBTitle: t.bookBTitle || t.book_b_title || t.book_b || t.bookTitle || ''
     };
   }
 
@@ -187,7 +209,9 @@ class DBService {
   async createTrade(bookId: string, ownerId?: string, meetingPoint?: string): Promise<Trade> {
     const response = await api.post('/exchanges', { 
       bookId: Number(bookId),
+      book_id: Number(bookId),
       book_b_id: Number(bookId),
+      toUserId: ownerId ? Number(ownerId) : undefined,
       to_user: ownerId ? Number(ownerId) : undefined,
       meetingPoint
     });

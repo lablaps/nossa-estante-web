@@ -118,12 +118,12 @@ const ExchangeRequests: React.FC = () => {
 
   const isRequester = (trade: Trade) => {
     if (!user) return false;
-    return trade.fromUserId === user.id || trade.fromUserName === user.name;
+    return trade.fromUserId === user.id || trade.fromUserName === user.name || trade.fromUserName === user.email;
   };
 
   const isOwner = (trade: Trade) => {
     if (!user) return false;
-    return trade.toUserId === user.id || trade.toUserName === user.name;
+    return trade.toUserId === user.id || trade.toUserName === user.name || trade.toUserName === user.email;
   };
 
   const getWhatsappHref = (phone?: string) => {
@@ -196,7 +196,7 @@ const ExchangeRequests: React.FC = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-[#F8FAF9] dark:bg-background-dark p-6 md:p-12">
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="max-w-[1500px] mx-auto space-y-8">
           <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-black tracking-tight dark:text-white">Solicitações de Trocas</h1>
@@ -204,12 +204,14 @@ const ExchangeRequests: React.FC = () => {
                 Quem solicita escolhe um livro. O dono responde escolhendo um livro do solicitante. A troca conclui quando os dois aceitam.
               </p>
             </div>
-            <Link to="/home" className="px-5 py-3 rounded-2xl bg-primary text-black font-black text-sm">
-              Ver livros
-            </Link>
-            <Link to="/chats" className="px-5 py-3 rounded-2xl bg-white border border-black/5 text-text-main font-black text-sm">
-              Abrir chat
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link to="/home" className="px-5 py-3 rounded-2xl bg-primary text-black font-black text-sm">
+                Ver livros
+              </Link>
+              <Link to="/chats" className="px-5 py-3 rounded-2xl bg-white border border-black/5 text-text-main font-black text-sm">
+                Abrir chat
+              </Link>
+            </div>
           </header>
 
           <div className="bg-white dark:bg-surface-dark rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
