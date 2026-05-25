@@ -9,19 +9,9 @@ import MyShelf from './pages/MyShelf';
 import AddBook from './pages/AddBook';
 import BookDetails from './pages/BookDetails';
 import Signup from './pages/Signup';
-import Profile from './pages/Profile';
 import Chat from './pages/Chat';
 import Exchanges from './pages/Exchanges';
 import Wallet from './pages/Wallet';
-import { authService } from './services/authService';
-
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  if (!authService.isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
 
 const App: React.FC = () => {
   return (
@@ -31,17 +21,17 @@ const App: React.FC = () => {
         <Route path="/intro" element={<Onboarding />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-        <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-        <Route path="/minha-estante" element={<ProtectedRoute><MyShelf /></ProtectedRoute>} />
-        <Route path="/cadastrar-livro" element={<ProtectedRoute><AddBook /></ProtectedRoute>} />
-        <Route path="/livro/:id" element={<ProtectedRoute><BookDetails /></ProtectedRoute>} />
-        <Route path="/meu-perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/trocas" element={<ProtectedRoute><Exchanges /></ProtectedRoute>} />
-        <Route path="/troca/:tradeId" element={<ProtectedRoute><Exchanges /></ProtectedRoute>} />
-        <Route path="/chats" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-        <Route path="/chat/:tradeId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-        <Route path="/carteira" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/minha-estante" element={<MyShelf />} />
+        <Route path="/cadastrar-livro" element={<AddBook />} />
+        <Route path="/livro/:id" element={<BookDetails />} />
+        <Route path="/meu-perfil" element={<Navigate to="/minha-estante" replace />} />
+        <Route path="/trocas" element={<Exchanges />} />
+        <Route path="/troca/:tradeId" element={<Exchanges />} />
+        <Route path="/chats" element={<Chat />} />
+        <Route path="/chat/:tradeId" element={<Chat />} />
+        <Route path="/carteira" element={<Wallet />} />
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
       <AuthModal />

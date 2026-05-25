@@ -28,7 +28,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToSignup }) =>
       } else if (err.response?.status === 401) {
         setError('E-mail ou senha incorretos.');
       } else {
-        setError('Nao foi possivel entrar agora. Tente novamente mais tarde.');
+        setError('Não foi possível entrar agora. Tente novamente mais tarde.');
       }
     } finally {
       setLoading(false);
@@ -97,7 +97,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToSignup }) =>
       </form>
 
       <p className="text-center text-base font-medium text-text-muted">
-        Ainda nao tem conta?{' '}
+        Ainda não tem conta?{' '}
         <button type="button" onClick={onSwitchToSignup} className="text-text-main font-bold hover:underline">
           Criar cadastro
         </button>
@@ -107,4 +107,3 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToSignup }) =>
 };
 
 export default LoginForm;
-

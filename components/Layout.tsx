@@ -26,10 +26,9 @@ const Layout: React.FC<{ children: React.ReactNode; hideBottomNav?: boolean }> =
     { path: '/home', icon: 'home', label: 'Início' },
     { path: '/explore', icon: 'map', label: 'Explorar' },
     { path: '/cadastrar-livro', icon: 'add', label: 'Cadastrar Livro' },
-    { path: '/minha-estante', icon: 'auto_stories', label: 'Minha Estante' },
     { path: '/trocas', icon: 'swap_horiz', label: 'Trocas' },
     { path: '/chats', icon: 'chat', label: 'Chat' },
-    { path: '/meu-perfil', icon: 'person', label: 'Meu Perfil' },
+    { path: '/minha-estante', icon: 'auto_stories', label: 'Minha Estante' },
   ];
 
   return (

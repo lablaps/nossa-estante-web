@@ -22,12 +22,12 @@ const SOCIAL_BUTTONS = [
 ];
 
 const FAVORITE_CATEGORIES = [
-  'Romance', 'Ficcao', 'Fantasia', 'Terror', 'Biografia',
-  'Negocios', 'Autoajuda', 'Tecnologia', 'HQs', 'Academico',
+  'Romance', 'Ficção', 'Fantasia', 'Terror', 'Biografia',
+  'Negócios', 'Autoajuda', 'Tecnologia', 'HQs', 'Acadêmico',
 ];
 
 const PROFESSIONAL_INTERESTS = [
-  'Tecnologia', 'Educacao', 'Direito', 'Saude',
+  'Tecnologia', 'Educação', 'Direito', 'Saúde',
   'Marketing', 'Design', 'Financas', 'Empreendedorismo',
 ];
 
@@ -161,7 +161,7 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
       if (error.response?.status === 409) {
         setMessage('Ja existe uma conta com este e-mail.');
       } else {
-        setMessage('Nao foi possivel concluir o cadastro agora. Tente novamente em instantes.');
+        setMessage('Não foi possível concluir o cadastro agora. Tente novamente em instantes.');
       }
     } finally {
       setLoading(false);
@@ -172,7 +172,7 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
     <section key="access" className="space-y-6">
       <div className="space-y-2">
         <p className="text-sm font-black uppercase tracking-[0.24em] text-primary">Etapa 1</p>
-        <h2 className="text-3xl font-extrabold text-text-main">Como voce quer comecar?</h2>
+        <h2 className="text-3xl font-extrabold text-text-main">Como você quer começar?</h2>
         <p className="text-base text-text-muted font-medium">
           Entre pelo celular agora e deixe os atalhos visuais de Facebook e Gmail prontos para depois.
         </p>
@@ -205,14 +205,14 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
         <p className="text-sm font-black uppercase tracking-[0.24em] text-primary">Etapa 2</p>
         <h2 className="text-3xl font-extrabold text-text-main">Monte seu perfil</h2>
         <p className="text-base text-text-muted font-medium">
-          Essas informacoes ajudam a personalizar trocas, grupos e recomendacoes.
+          Essas informações ajudam a personalizar trocas, grupos e recomendações.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
         {[
           { label: 'Como prefere ser chamado?', icon: 'person', value: name, setValue: setName, placeholder: 'Seu nome ou apelido leitor' },
-          { label: 'Cidade ou regiao', icon: 'location_on', value: city, setValue: setCity, placeholder: 'Sao Luis, Centro, Cohama...' },
+          { label: 'Cidade ou região', icon: 'location_on', value: city, setValue: setCity, placeholder: 'São Luís, Centro, Cohama...' },
           { label: 'Area profissional ou momento atual', icon: 'work', value: occupation, setValue: setOccupation, placeholder: 'Estudante, designer, pesquisador...' },
         ].map((field) => (
           <div key={field.label} className="space-y-2">
@@ -269,7 +269,7 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
       </div>
 
       <div className="space-y-3">
-        <label className="text-base font-semibold ml-2">O que voce busca na Nossa Estante?</label>
+        <label className="text-base font-semibold ml-2">O que você busca na Nossa Estante?</label>
         <div className="flex flex-wrap gap-3">
           {EXCHANGE_GOALS.map((goal) => (
             <StepChip
@@ -294,7 +294,7 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
         </div>
 
         <div className="space-y-2">
-          <label className="text-base font-semibold ml-2">Quando voce costuma ler?</label>
+          <label className="text-base font-semibold ml-2">Quando você costuma ler?</label>
           <input
             type="text"
             value={readingMoment}
@@ -310,7 +310,7 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
         <p className="text-sm font-black uppercase tracking-[0.24em] text-primary">Etapa 4</p>
         <h2 className="text-3xl font-extrabold text-text-main">Finalize sua conta</h2>
         <p className="text-base text-text-muted font-medium">
-          Falta so definir o acesso que voce vai usar para entrar na plataforma.
+          Falta só definir o acesso que você vai usar para entrar na plataforma.
         </p>
       </div>
 
@@ -355,7 +355,7 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
         <p className="text-sm font-black uppercase tracking-[0.24em] text-primary">Criar conta</p>
         <h2 className="text-4xl font-extrabold text-text-main">Cadastro em etapas para a sua estante</h2>
         <p className="text-text-muted font-medium text-base max-w-2xl mx-auto">
-          O cadastro continua multi-step, agora em um fluxo central para voce entrar sem sair da pagina.
+          O cadastro continua multi-step, agora em um fluxo central para você entrar sem sair da página.
         </p>
       </div>
 
@@ -431,4 +431,3 @@ const SignupWizard: React.FC<SignupWizardProps> = ({ onSuccess, onSwitchToLogin 
 };
 
 export default SignupWizard;
-

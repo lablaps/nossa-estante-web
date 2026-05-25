@@ -35,7 +35,7 @@ const AuthModal: React.FC = () => {
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
       <button
         type="button"
-        aria-label="Fechar autenticacao"
+        aria-label="Fechar autenticação"
         onClick={closeModal}
         className="absolute inset-0 bg-black/45 backdrop-blur-sm"
       />

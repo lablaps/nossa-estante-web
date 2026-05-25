@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { dbService } from '../services/dbService';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -11,10 +11,17 @@ const center = {
     lng: -44.3068
 };
 
+type UserCoords = {
+    lat: number;
+    lng: number;
+};
+
 const Explore: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
     const [activeBook, setActiveBook] = useState<Book | null>(null);
     const [loading, setLoading] = useState(true);
+    const [coords, setCoords] = useState<UserCoords | null>(null);
+    const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'granted' | 'denied'>('idle');
 
     useEffect(() => {
         const fetchBooks = async () => {
@@ -33,10 +40,35 @@ const Explore: React.FC = () => {
         fetchBooks();
     }, []);
 
-    // Real coordinates should come from the backend. 
-    // Books without latitude/longitude properties will be ignored by the map for now.
-    // Note: The 'Book' interface in types.ts doesn't have lat/lng currently.
-    // We would need to update the interface and backend to support this properly.
+    const requestLocation = () => {
+        if (!navigator.geolocation) {
+            setLocationStatus('denied');
+            return;
+        }
+
+        setLocationStatus('loading');
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setCoords({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                });
+                setLocationStatus('granted');
+            },
+            () => {
+                setLocationStatus('denied');
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000
+            }
+        );
+    };
+
+    useEffect(() => {
+        requestLocation();
+    }, []);
     
     if (loading) {
         return (
@@ -48,9 +80,14 @@ const Explore: React.FC = () => {
         );
     }
 
-    // Since Books don't have lat/lng yet, markerPoints will be empty 
-    // until the data model is updated. No more mocked positions.
-    const markerPoints: any[] = [];
+    const mapCenter = coords || center;
+
+    const markerPoints = books.slice(0, 6).map((book, index) => ({
+        id: book.id,
+        lat: mapCenter.lat + 0.004 + index * 0.0025,
+        lng: mapCenter.lng - 0.003 + index * 0.002,
+        label: `${index + 1}`
+    }));
 
     return (
         <Layout>
@@ -62,7 +99,7 @@ const Explore: React.FC = () => {
                             <span className="material-symbols-outlined text-text-muted">search</span>
                             <input
                                 type="text"
-                                placeholder="Buscar em São Luís..."
+                                placeholder={locationStatus === 'granted' ? 'Buscar perto de você...' : 'Buscar em São Luís...'}
                                 className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold placeholder:text-text-muted/70 ml-2 outline-none"
                             />
                         </div>
@@ -74,14 +111,24 @@ const Explore: React.FC = () => {
                                 {filter}
                             </button>
                         ))}
+
+                        {locationStatus !== 'granted' && (
+                            <button
+                                type="button"
+                                onClick={requestLocation}
+                                className="px-4 py-1.5 rounded-full text-xs font-bold backdrop-blur-md border border-white/10 shadow-lg bg-white/90 text-text-main"
+                            >
+                                {locationStatus === 'loading' ? 'Localizando...' : 'Usar minha localização'}
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 {/* Mapa MapLibre (Substituindo Google Maps) */}
                 <div className="absolute inset-0 z-0">
                     <MapLibre 
-                        lat={center.lat} 
-                        lng={center.lng} 
+                        lat={mapCenter.lat} 
+                        lng={mapCenter.lng} 
                         zoom={13}
                         markers={markerPoints}
                         onMarkerClick={(point) => {
