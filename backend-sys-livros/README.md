@@ -83,23 +83,3 @@ src/main/java/br/com/treinaweb/twjobs/
  └── resources/
 
 
-## 🔝 Deploying steps on Render
-
-### Postgresql Database
-
-- New => Postgresql => Give a name for your db => Postgresql version should be the same of the one of your tests => Select free version => Create database
-- Setting up the Hosted database credentials for you application.properties => https://youtu.be/-zqoGttHmtg?si=AKPCBxf9l6T5Csvh
-
-### Web Service
-
-### Create image
-
-### Send image to Docker-Hub
-
-- docker push <your image name>
-
-### Check if the image is in Docker-Hub
-
-### Upload image on Render
-
-- Home page: new => Existing Image => Put the Docker-Hub image name here => Connect => Give a name => Deploy Web Service => End
