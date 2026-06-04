@@ -16,9 +16,16 @@ public class UserRequest {
 
     private String password;
 
+    
     private Role role;
     
     private boolean verified;
+
     // private Boolean sendEmail;
+
+    // Came from the new mapping
+    
+
+    
 
 }

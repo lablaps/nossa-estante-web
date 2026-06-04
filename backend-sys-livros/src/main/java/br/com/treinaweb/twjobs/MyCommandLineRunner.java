@@ -68,6 +68,12 @@ public class MyCommandLineRunner implements CommandLineRunner {
             userRepository.save(user);
         }
 
+        // Cadastrando Livros
+
+        // Cadastrando Trocas
+
+        
+
 
 
     }

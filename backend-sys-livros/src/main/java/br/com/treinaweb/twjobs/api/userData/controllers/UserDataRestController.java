@@ -37,6 +37,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+
 
 
 
@@ -49,9 +51,6 @@ public class UserDataRestController {
     private final UserDataAssembler userDataAssembler;
     private final UserDataMapper userDataMapper;
     private final SecurityService securityService;
-    // private final 
-
-
 
     @Autowired
     private ObjectMapper mapper;
@@ -78,6 +77,33 @@ public class UserDataRestController {
         var userDataResponse = userDataMapper.toUserDataResponse(userData);
         
         return userDataAssembler.toModel(userDataResponse);
+    }
+
+    @GetMapping("/id")
+    public Long getIdUserDataByUser() {
+        var user_section = securityService.getCurrentUser();
+        System.out.println(user_section);
+        Optional<UserData> user = userDataRepository.findByUserId(user_section.getId());
+        System.out.println(user);
+        return user.get().getId();
+    }
+
+    @PutMapping("/{id}")
+    public EntityModel<UserDataResponse> update(
+            @RequestBody UserDataRequest userDataRequest,
+            @PathVariable Long id
+    ) {
+         var userSaved = userDataRepository.findById(id)
+         .orElseThrow(RuntimeException::new);
+
+         var userData = userDataMapper.toUserData(userDataRequest);
+         BeanUtils.copyProperties(userData, userSaved, "id");
+         
+         userData = userDataRepository.save(userData);
+
+         var userDataResponse = userDataMapper.toUserDataResponse(userData);
+
+         return userDataAssembler.toModel(userDataResponse);
     }
 
 

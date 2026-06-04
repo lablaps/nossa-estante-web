@@ -28,4 +28,9 @@ public class UserRequest {
     @NotNull
     private Role role;
     
+    // New mapping
+    private String passwordConfirmation;
+
+    private String roleDescription;
+    
 }

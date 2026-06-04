@@ -34,4 +34,14 @@ public class UserDataRequest {
 
     private String text;
 
+    // New mapping
+    private String cpf;
+    private String birthDate;
+    private String phone;
+    private String profession;
+    private String linkedInstitution;
+    private String position;
+    private String organization;
+    private String department;
+
 }

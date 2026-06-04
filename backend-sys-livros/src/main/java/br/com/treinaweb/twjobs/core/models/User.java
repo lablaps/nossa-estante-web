@@ -65,4 +65,10 @@ public class User {
     // @PrimaryKeyJoinColumn
     // private UserData userData;
 
+
+    // New Mapping
+    private String passwordConfirmation;
+
+    private String roleDescription;
+
 }
