@@ -19,6 +19,7 @@ export const bookService = {
   fetchBookByISBN: async (isbn: string): Promise<BookApiInfo | null> => {
     const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
     const cleanText = (value?: string) => value?.replace(/^\[|\]$/g, '').trim();
+    let hadApiError = false;
 
     try {
       const bibKey = `ISBN:${cleanIsbn}`;
@@ -43,6 +44,7 @@ export const bookService = {
         };
       }
     } catch (error) {
+      hadApiError = true;
       console.error('Error fetching book from Open Library:', error);
     }
 
@@ -64,7 +66,12 @@ export const bookService = {
         };
       }
     } catch (error) {
+      hadApiError = true;
       console.error('Error fetching book from Google Books:', error);
+    }
+
+    if (hadApiError) {
+      throw new Error('Book ISBN API failed');
     }
 
     return null;
