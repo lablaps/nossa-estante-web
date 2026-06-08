@@ -13,6 +13,7 @@ const BookDetails: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
+  const [creatingExchange, setCreatingExchange] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,16 +47,23 @@ const BookDetails: React.FC = () => {
 
   if (!book) return <div className="p-8 text-center dark:text-white">Livro não encontrado!</div>;
 
-  const handleRedeem = async () => {
+  const handleCreateExchange = async () => {
     if (!user || !book) return;
+    setCreatingExchange(true);
     try {
-      const trade = await dbService.createTrade(book.id, book.ownerId);
+      const trade = await dbService.createExchange(book.id);
       navigate(`/troca/${trade.id}`);
     } catch (error) {
-      console.error('Error creating trade:', error);
-      alert('Erro ao resgatar livro. Tente novamente.');
+      console.error('Error creating exchange:', error);
+      alert('Erro ao solicitar troca. Tente novamente.');
+    } finally {
+      setCreatingExchange(false);
     }
   };
+
+  const isOwnBook = user?.id === book.ownerId;
+  const isAvailable = book.status === 'Available';
+  const actionLabel = isOwnBook ? 'SEU LIVRO' : isAvailable ? 'SOLICITAR TROCA' : 'INDISPONÍVEL';
 
   return (
     <Layout>
@@ -192,11 +200,11 @@ const BookDetails: React.FC = () => {
             </div>
             
             <button
-              onClick={handleRedeem}
-              disabled={!user || user.id === book.ownerId || book.status !== 'Available'}
+              onClick={handleCreateExchange}
+              disabled={!user || isOwnBook || !isAvailable || creatingExchange}
               className="px-10 py-5 bg-primary text-text-main font-black rounded-2xl shadow-lg shadow-primary/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
             >
-              <span>{user?.id === book.ownerId ? 'SEU LIVRO' : book.status === 'Available' ? 'RESGATAR AGORA' : 'INDISPONÍVEL'}</span>
+              <span>{creatingExchange ? 'SOLICITANDO...' : actionLabel}</span>
               <span className="material-symbols-outlined text-xl">keyboard_double_arrow_right</span>
             </button>
           </div>

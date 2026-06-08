@@ -5,59 +5,57 @@ import { authService } from '../services/authService';
 import { dbService } from '../services/dbService';
 import { Book, Trade, User } from '../types';
 
-const statusInfo = (trade: Trade) => {
-  if (trade.statusTotal || (trade.statusA && trade.statusB)) {
-    return { label: 'ACEITO', className: 'bg-green-500 text-black' };
+const statusInfo = (status: string) => {
+  switch (status) {
+    case 'ANSWERED':
+      return { label: 'RESPONDIDA', className: 'bg-sky-300 text-black' };
+    case 'ACCEPTED':
+      return { label: 'CONCLUÍDA', className: 'bg-green-500 text-black' };
+    case 'CANCELLED':
+      return { label: 'CANCELADA', className: 'bg-gray-300 text-gray-800' };
+    default:
+      return { label: 'PENDENTE', className: 'bg-yellow-300 text-black' };
   }
-
-  if (trade.statusB && !trade.statusA) {
-    return { label: 'AGUARDANDO ACEITE', className: 'bg-sky-300 text-black' };
-  }
-
-  return { label: 'AGUARDANDO RESPOSTA', className: 'bg-yellow-300 text-black' };
 };
 
-const ExchangeRequests: React.FC = () => {
+const normalizeText = (value?: string) => (value || '').trim().toLowerCase();
+const sameValue = (first?: string, second?: string) => !!normalizeText(first) && normalizeText(first) === normalizeText(second);
+const isAvailableBook = (book: Book) => normalizeText(book.status) === 'available';
+
+const Exchanges: React.FC = () => {
   const { tradeId } = useParams();
   const [user, setUser] = useState<User | null>(null);
   const [trades, setTrades] = useState<Trade[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
-  const [myBooks, setMyBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [selectedBookId, setSelectedBookId] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   const loadData = async () => {
     setLoading(true);
+    setError('');
     try {
-      const [currentUser, exchangeData, allBooks, ownBooks] = await Promise.all([
+      const [currentUser, exchangeData, allBooks] = await Promise.all([
         authService.getCurrentUser(),
-        dbService.getTrades(),
+        dbService.getExchanges(),
         dbService.getBooks(),
-        dbService.getMyBooks(),
       ]);
 
       let normalizedExchanges = exchangeData;
       if (tradeId) {
-        try {
-          const detail = await dbService.getTradeById(tradeId);
-          normalizedExchanges = exchangeData.some((trade) => trade.id === detail.id)
-            ? exchangeData.map((trade) => trade.id === detail.id ? detail : trade)
-            : [detail, ...exchangeData];
-        } catch (error) {
-          console.error('Erro ao buscar detalhe da troca:', error);
-        }
+        const detail = await dbService.getExchangeById(tradeId);
+        normalizedExchanges = exchangeData.some((trade) => trade.id === detail.id)
+          ? exchangeData.map((trade) => trade.id === detail.id ? detail : trade)
+          : [detail, ...exchangeData];
       }
 
       setUser(currentUser);
       setTrades(normalizedExchanges);
       setBooks(allBooks);
-      setMyBooks(ownBooks);
-
-      if (tradeId) {
-        const highlighted = normalizedExchanges.find((trade) => trade.id === tradeId);
-        if (highlighted) setSelectedTrade(highlighted);
-      }
+    } catch (requestError: any) {
+      setError(requestError?.response?.data?.message || 'Erro ao carregar trocas.');
     } finally {
       setLoading(false);
     }
@@ -69,118 +67,122 @@ const ExchangeRequests: React.FC = () => {
 
   const bookById = useMemo(() => {
     const map = new Map<string, Book>();
-    [...books, ...myBooks].forEach((book) => map.set(book.id, book));
+    books.forEach((book) => map.set(book.id, book));
     return map;
-  }, [books, myBooks]);
+  }, [books]);
 
-  const getBookTitle = (id?: string, fallback?: string) => {
-    if (!id) return fallback || '-';
-    return bookById.get(id)?.title || fallback || `Livro #${id}`;
+  const isRequester = (trade: Trade) => user?.id === trade.fromUserId;
+  const isOwner = (trade: Trade) => user?.id === trade.toUserId;
+
+  const requesterBooks = selectedTrade
+    ? books.filter((book) => (
+        (
+          sameValue(book.ownerId, selectedTrade.fromUserId)
+          || sameValue(book.ownerName, selectedTrade.fromUserName)
+        )
+        && isAvailableBook(book)
+        && book.id !== selectedTrade.bookBId
+      ))
+    : [];
+
+  const runAction = async (trade: Trade, action: () => Promise<Trade>) => {
+    setSavingId(trade.id);
+    setError('');
+    try {
+      await action();
+      setSelectedTrade(null);
+      setSelectedBookId('');
+      await loadData();
+    } catch (requestError: any) {
+      setError(requestError?.response?.data?.message || 'Erro ao atualizar troca.');
+    } finally {
+      setSavingId(null);
+    }
   };
 
-  const renderBookCell = (id?: string, fallback?: string, emptyLabel = 'Ainda não escolhido') => {
-    if (!id && !fallback) {
+  const respondExchange = async () => {
+    if (!selectedTrade) return;
+    if (!selectedBookId) {
+      setError('Selecione um livro para responder.');
+      return;
+    }
+    await runAction(selectedTrade, () => dbService.respondExchange(selectedTrade.id, selectedBookId));
+  };
+
+  const acceptExchange = async (trade: Trade) => {
+    if (!trade.bookAId) {
+      setError('A troca ainda nao possui livro oferecido.');
+      return;
+    }
+    await runAction(trade, () => dbService.acceptExchange(trade.id));
+  };
+
+  const cancelExchange = async (trade: Trade) => {
+    await runAction(trade, () => dbService.cancelExchange(trade.id));
+  };
+
+  const renderAction = (trade: Trade) => {
+    const busy = savingId === trade.id;
+
+    if (trade.status === 'ACCEPTED') {
+      return <span className="text-xs font-black text-green-600">Troca concluída</span>;
+    }
+
+    if (trade.status === 'CANCELLED') {
+      return <span className="text-xs font-black text-gray-500">Cancelada</span>;
+    }
+
+    if (isOwner(trade) && trade.status === 'PENDING') {
       return (
-        <div className="inline-flex items-center gap-2 rounded-2xl bg-yellow-50 px-3 py-2 text-xs font-black text-yellow-700">
-          <span className="material-symbols-outlined text-[16px]">hourglass_empty</span>
-          {emptyLabel}
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setSelectedTrade(trade)}
+            className="px-4 py-2 rounded-xl bg-primary text-black text-xs font-black disabled:opacity-50"
+          >
+            Responder
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => cancelExchange(trade)}
+            className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-xs font-black disabled:opacity-50"
+          >
+            Cancelar
+          </button>
         </div>
       );
     }
 
-    return (
-      <>
-        <div className="font-bold dark:text-white">{getBookTitle(id, fallback)}</div>
-        <div className="mt-2 flex items-center gap-2">
-          {id && <span className="text-xs text-text-muted font-bold">ID {id}</span>}
-          {id && (
-            <Link to={`/livro/${id}`} className="size-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[18px]">visibility</span>
-            </Link>
-          )}
+    if (isRequester(trade) && trade.status === 'ANSWERED') {
+      return (
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => acceptExchange(trade)}
+            className="px-4 py-2 rounded-xl bg-green-500 text-black text-xs font-black disabled:opacity-50"
+          >
+            Aceitar
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => cancelExchange(trade)}
+            className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-xs font-black disabled:opacity-50"
+          >
+            Cancelar
+          </button>
         </div>
-      </>
-    );
-  };
-
-  const getRequesterBooks = (trade: Trade) => {
-    const requestedId = trade.bookBId || trade.bookId;
-    return books.filter((book) => {
-      const sameOwnerById = trade.fromUserId && book.ownerId === trade.fromUserId;
-      const sameOwnerByName = trade.fromUserName && book.ownerName === trade.fromUserName;
-      return book.id !== requestedId && (sameOwnerById || sameOwnerByName);
-    });
-  };
-
-  const openChooseBook = (trade: Trade) => {
-    setSelectedTrade(trade);
-  };
-
-  const isRequester = (trade: Trade) => {
-    if (!user) return false;
-    return trade.fromUserId === user.id || trade.fromUserName === user.name || trade.fromUserName === user.email;
-  };
-
-  const isOwner = (trade: Trade) => {
-    if (!user) return false;
-    return trade.toUserId === user.id || trade.toUserName === user.name || trade.toUserName === user.email;
-  };
-
-  const getWhatsappHref = (phone?: string) => {
-    const cleanPhone = phone?.replace(/\D/g, '');
-    return cleanPhone ? `https://wa.me/${cleanPhone}` : '';
-  };
-
-  const chooseRequesterBook = async (trade: Trade, bookAId: string) => {
-    const finalBookBId = trade.bookBId || trade.bookId;
-
-    if (!bookAId || !finalBookBId) {
-      alert('Selecione os dois livros da troca.');
-      return;
+      );
     }
 
-    setSavingId(trade.id);
-    try {
-      await dbService.updateTrade(trade.id, {
-        status_a: Boolean(trade.statusA),
-        status_b: true,
-        book_a_id: Number(bookAId),
-        book_b_id: Number(finalBookBId),
-      });
-      setSelectedTrade(null);
-      await loadData();
-    } catch (error) {
-      console.error('Erro ao atualizar troca:', error);
-      alert('Erro ao atualizar troca.');
-    } finally {
-      setSavingId(null);
+    if (isRequester(trade) && trade.status === 'PENDING') {
+      return <span className="text-xs font-black text-yellow-600">Aguardando resposta</span>;
     }
-  };
 
-  const requesterAccept = async (trade: Trade) => {
-    setSavingId(trade.id);
-    try {
-      const finalBookBId = trade.bookBId || trade.bookId;
-
-      if (!trade.bookAId || !finalBookBId) {
-        alert('Aguarde o outro usuário escolher um livro antes de aceitar.');
-        return;
-      }
-
-      await dbService.updateTrade(trade.id, {
-        status_a: true,
-        status_b: true,
-        book_a_id: Number(trade.bookAId),
-        book_b_id: Number(finalBookBId),
-      });
-
-      await loadData();
-    } catch (error) {
-      console.error('Erro ao aceitar troca:', error);
-      alert('Erro ao aceitar troca.');
-    } finally {
-      setSavingId(null);
-    }
+    return <span className="text-xs font-black text-text-muted">Sem ação</span>;
   };
 
   if (loading) {
@@ -199,20 +201,19 @@ const ExchangeRequests: React.FC = () => {
         <div className="max-w-[1500px] mx-auto space-y-8">
           <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight dark:text-white">Solicitações de Trocas</h1>
-              <p className="text-text-muted font-medium mt-2">
-                Quem solicita escolhe um livro. O dono responde escolhendo um livro do solicitante. A troca conclui quando os dois aceitam.
-              </p>
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight dark:text-white">Trocas</h1>
+              <p className="text-text-muted font-medium mt-2">Solicitações, respostas e conclusões das suas trocas.</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Link to="/home" className="px-5 py-3 rounded-2xl bg-primary text-black font-black text-sm">
-                Ver livros
-              </Link>
-              <Link to="/chats" className="px-5 py-3 rounded-2xl bg-white border border-black/5 text-text-main font-black text-sm">
-                Abrir chat
-              </Link>
-            </div>
+            <Link to="/home" className="px-5 py-3 rounded-2xl bg-primary text-black font-black text-sm">
+              Ver livros
+            </Link>
           </header>
+
+          {error && (
+            <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+              {error}
+            </div>
+          )}
 
           <div className="bg-white dark:bg-surface-dark rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
@@ -222,9 +223,9 @@ const ExchangeRequests: React.FC = () => {
                     <th className="px-6 py-4 text-[10px] font-black text-text-muted uppercase tracking-widest">ID</th>
                     <th className="px-6 py-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Status</th>
                     <th className="px-6 py-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Livro solicitado</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Livro escolhido</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Livro oferecido</th>
                     <th className="px-6 py-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Participantes</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Chat</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Ponto</th>
                     <th className="px-6 py-4 text-[10px] font-black text-text-muted uppercase tracking-widest text-right">Ação</th>
                   </tr>
                 </thead>
@@ -232,13 +233,13 @@ const ExchangeRequests: React.FC = () => {
                   {trades.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-16 text-center text-text-muted font-bold">
-                        Nenhuma solicitação de troca encontrada.
+                        Nenhuma troca encontrada.
                       </td>
                     </tr>
                   ) : trades.map((trade) => {
-                    const status = statusInfo(trade);
-                    const requestedId = trade.bookBId || trade.bookId;
-                    const selectedRequesterBookId = trade.bookAId;
+                    const status = statusInfo(trade.status);
+                    const requestedTitle = trade.bookBTitle || trade.bookTitle || bookById.get(trade.bookBId || trade.bookId)?.title || '-';
+                    const offeredTitle = trade.bookATitle || bookById.get(trade.bookAId || '')?.title;
 
                     return (
                       <tr key={trade.id} className={trade.id === tradeId ? 'bg-primary/5' : ''}>
@@ -249,75 +250,29 @@ const ExchangeRequests: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-5">
-                          <div className="font-bold dark:text-white">{getBookTitle(requestedId, trade.bookBTitle || trade.bookTitle)}</div>
-                          <div className="mt-2 flex items-center gap-2">
-                            <span className="text-xs text-text-muted font-bold">ID {requestedId || '-'}</span>
-                            {requestedId && (
-                              <Link to={`/livro/${requestedId}`} className="size-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-[18px]">visibility</span>
-                              </Link>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-5">
-                          {renderBookCell(selectedRequesterBookId, trade.bookATitle, 'Aguardando resposta')}
-                        </td>
-                        <td className="px-6 py-5 text-sm text-text-muted font-bold">
-                          <div>De: {trade.fromUserName || trade.fromUserId || '-'}</div>
-                          <div>Para: {trade.toUserName || trade.toUserId || '-'}</div>
-                        </td>
-                        <td className="px-6 py-5">
-                          <Link to={`/chat/${trade.id}`} className="size-9 rounded-full bg-primary/15 text-primary flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[18px]">chat</span>
+                          <div className="font-bold dark:text-white">{requestedTitle}</div>
+                          <Link to={`/livro/${trade.bookBId || trade.bookId}`} className="mt-2 inline-flex text-xs font-bold text-blue-600">
+                            Ver livro
                           </Link>
                         </td>
-                        <td className="px-6 py-5 text-right">
-                          {trade.statusTotal || (trade.statusA && trade.statusB) ? (
-                            <div className="flex flex-col items-end gap-2">
-                              <span className="text-xs font-black text-green-600">TROCA CONCLUÍDA</span>
-                              <div className="flex flex-wrap justify-end gap-2">
-                                {[
-                                  { label: trade.fromUserName || 'User A', phone: trade.fromUserPhone },
-                                  { label: trade.toUserName || 'User B', phone: trade.toUserPhone },
-                                ].map((contact) => {
-                                  const href = getWhatsappHref(contact.phone);
-                                  return href ? (
-                                    <a key={contact.label} href={href} target="_blank" rel="noreferrer" className="rounded-xl bg-green-100 px-3 py-1.5 text-[10px] font-black text-green-700">
-                                      WhatsApp {contact.label}
-                                    </a>
-                                  ) : (
-                                    <span key={contact.label} className="rounded-xl bg-gray-100 px-3 py-1.5 text-[10px] font-black text-text-muted">
-                                      Sem telefone {contact.label}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          ) : isRequester(trade) && trade.statusB && !trade.statusA ? (
-                            <button
-                              type="button"
-                              disabled={savingId === trade.id}
-                              onClick={() => requesterAccept(trade)}
-                              className="px-4 py-2 rounded-xl bg-green-500 text-black text-xs font-black disabled:opacity-50"
-                            >
-                              ACEITAR
-                            </button>
-                          ) : isRequester(trade) ? (
-                            <span className="text-xs font-black text-yellow-600">AGUARDANDO</span>
-                          ) : isOwner(trade) ? (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => openChooseBook(trade)}
-                                className="px-4 py-2 rounded-xl bg-primary text-black text-xs font-black"
-                              >
-                                RESPONDER
-                              </button>
-                            </div>
+                        <td className="px-6 py-5">
+                          {offeredTitle ? (
+                            <>
+                              <div className="font-bold dark:text-white">{offeredTitle}</div>
+                              <Link to={`/livro/${trade.bookAId}`} className="mt-2 inline-flex text-xs font-bold text-blue-600">
+                                Ver livro
+                              </Link>
+                            </>
                           ) : (
-                            <span className="text-xs font-black text-text-muted">SEM AÇÃO</span>
+                            <span className="text-xs font-black text-yellow-700">Aguardando escolha</span>
                           )}
                         </td>
+                        <td className="px-6 py-5 text-sm text-text-muted font-bold">
+                          <div>Solicitante: {trade.fromUserName || trade.fromUserId || '-'}</div>
+                          <div>Dono: {trade.toUserName || trade.toUserId || '-'}</div>
+                        </td>
+                        <td className="px-6 py-5 text-sm text-text-muted font-bold">{trade.meetingPoint}</td>
+                        <td className="px-6 py-5 text-right">{renderAction(trade)}</td>
                       </tr>
                     );
                   })}
@@ -332,15 +287,20 @@ const ExchangeRequests: React.FC = () => {
             <button className="absolute inset-0 bg-black/45" onClick={() => setSelectedTrade(null)} />
             <div className="relative z-10 w-full max-w-lg rounded-[32px] bg-white dark:bg-surface-dark p-6 shadow-2xl space-y-5">
               <div>
-                <h2 className="text-2xl font-black dark:text-white">Livros da pessoa solicitante</h2>
-                <p className="text-sm text-text-muted mt-1">
-                  Escolha o livro do User A que você deseja receber como réplica.
-                </p>
+                <h2 className="text-2xl font-black dark:text-white">Responder troca</h2>
+                <p className="text-sm text-text-muted mt-1">Escolha um livro disponível do solicitante.</p>
               </div>
 
               <div className="max-h-[360px] overflow-y-auto space-y-3 pr-1">
-                {getRequesterBooks(selectedTrade).map((book) => (
-                  <div key={book.id} className="flex items-center gap-4 rounded-2xl border border-black/5 bg-[#F8FAF9] p-3">
+                {requesterBooks.map((book) => (
+                  <button
+                    key={book.id}
+                    type="button"
+                    onClick={() => setSelectedBookId(book.id)}
+                    className={`w-full flex items-center gap-4 rounded-2xl border p-3 text-left ${
+                      selectedBookId === book.id ? 'border-primary bg-primary/10' : 'border-black/5 bg-[#F8FAF9]'
+                    }`}
+                  >
                     <div className="h-20 w-14 shrink-0 overflow-hidden rounded-xl bg-white">
                       {book.coverURL ? (
                         <img src={book.coverURL} alt={book.title} className="h-full w-full object-cover" />
@@ -353,23 +313,14 @@ const ExchangeRequests: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-black dark:text-white">{book.title}</p>
                       <p className="mt-1 truncate text-sm text-text-muted">{book.author}</p>
-                      <p className="mt-2 text-xs font-bold text-text-muted">ID {book.id}</p>
                     </div>
-                    <button
-                      type="button"
-                      disabled={savingId === selectedTrade.id}
-                      onClick={() => chooseRequesterBook(selectedTrade, book.id)}
-                      className="rounded-xl bg-primary px-4 py-2 text-xs font-black text-black disabled:opacity-50"
-                    >
-                      Quero
-                    </button>
-                  </div>
+                  </button>
                 ))}
               </div>
 
-              {getRequesterBooks(selectedTrade).length === 0 && (
+              {requesterBooks.length === 0 && (
                 <p className="rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-700">
-                  Não encontramos livros cadastrados para essa pessoa. Use o chat para combinar antes de responder.
+                  O solicitante não possui livros disponíveis.
                 </p>
               )}
 
@@ -379,14 +330,16 @@ const ExchangeRequests: React.FC = () => {
                   onClick={() => setSelectedTrade(null)}
                   className="flex-1 rounded-2xl bg-gray-100 py-4 font-bold"
                 >
-                  Cancelar
+                  Fechar
                 </button>
-                <Link
-                  to={`/chat/${selectedTrade.id}`}
-                  className="flex-1 rounded-2xl bg-primary py-4 font-black text-black text-center"
+                <button
+                  type="button"
+                  disabled={!selectedBookId || savingId === selectedTrade.id}
+                  onClick={respondExchange}
+                  className="flex-1 rounded-2xl bg-primary py-4 font-black text-black disabled:opacity-50"
                 >
-                  Conversar no chat
-                </Link>
+                  Responder
+                </button>
               </div>
             </div>
           </div>
@@ -396,4 +349,4 @@ const ExchangeRequests: React.FC = () => {
   );
 };
 
-export default ExchangeRequests;
+export default Exchanges;

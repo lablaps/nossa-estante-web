@@ -23,10 +23,10 @@ class AuthService {
     const payload = this.parseJwt(token);
     if (!payload) return null;
 
-    const email = payload.sub || '';
+    const email = payload.email || payload.sub || '';
     return {
-      id: '0', // Placeholder or extract if present in claims
-      name: email.split('@')[0], // Using email prefix as name since backend doesn't provide it on login
+      id: payload.id?.toString() || '0',
+      name: payload.name || email.split('@')[0],
       email: email,
       role: payload.role,
       credits: 0,

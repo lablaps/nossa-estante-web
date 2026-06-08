@@ -3,6 +3,8 @@ import { dbService } from '../services/dbService';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import MapLibre from '../components/MapLibre';
+import AuthLink from '../components/auth/AuthLink';
+import { authService } from '../services/authService';
 import { Book } from '../types';
 
 // São Luís, Maranhão Coordinates
@@ -81,6 +83,7 @@ const Explore: React.FC = () => {
     }
 
     const mapCenter = coords || center;
+    const isAuthenticated = authService.isAuthenticated();
 
     const markerPoints = books.slice(0, 6).map((book, index) => ({
         id: book.id,
@@ -153,9 +156,15 @@ const Explore: React.FC = () => {
                                 </div>
 
                                 <div className="flex items-center gap-2 mt-2">
-                                    <Link to={`/livro/${activeBook.id}`} className="flex-1 bg-primary text-black text-center py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform">
-                                        Eu quero este!
-                                    </Link>
+                                    {isAuthenticated ? (
+                                        <Link to={`/livro/${activeBook.id}`} className="flex-1 bg-primary text-black text-center py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+                                            Eu quero este!
+                                        </Link>
+                                    ) : (
+                                        <AuthLink mode="login" className="flex-1 bg-primary text-black text-center py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+                                            Eu quero este!
+                                        </AuthLink>
+                                    )}
                                     <button className="size-9 bg-[#F3F6F4] dark:bg-white/10 rounded-xl flex items-center justify-center text-text-muted">
                                         <span className="material-symbols-outlined text-[18px]">favorite</span>
                                     </button>

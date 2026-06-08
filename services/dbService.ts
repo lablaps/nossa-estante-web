@@ -147,48 +147,40 @@ class DBService {
     return first ? first.map((item: any) => this.unwrapEntity(item)) : [];
   }
 
-  private mergeLocalTradeState(trade: Trade): Trade {
-    const raw = localStorage.getItem('ns_trade_state');
-    const states = raw ? JSON.parse(raw) : {};
-    return states[trade.id] ? { ...trade, ...states[trade.id] } : trade;
-  }
-
-  private saveLocalTradeState(id: string, partial: Partial<Trade>) {
-    const raw = localStorage.getItem('ns_trade_state');
-    const states = raw ? JSON.parse(raw) : {};
-    states[id] = { ...(states[id] || {}), ...partial };
-    localStorage.setItem('ns_trade_state', JSON.stringify(states));
-  }
-
   private mapTrade(raw: any): Trade {
     const t = this.unwrapEntity(raw);
+    const requestedBook = t.requestedBook || {};
+    const offeredBook = t.offeredBook || {};
+    const requesterUser = t.requesterUser || {};
+    const ownerUser = t.ownerUser || {};
     const fromUserText = typeof t.from_user === 'string' ? this.parseUserString(t.from_user) : {};
     const toUserText = typeof t.to_user === 'string' ? this.parseUserString(t.to_user) : {};
-    const bookBId = t.bookBId?.toString() || t.book_b_id?.toString() || t.bookId?.toString() || t.book_id?.toString() || '';
-    const bookAId = t.bookAId?.toString() || t.book_a_id?.toString() || '';
-    const fromUserName = this.formatOwnerName(t.fromUserName || fromUserText.name || fromUserText.email || t.from_user || '');
-    const toUserName = this.formatOwnerName(t.toUserName || toUserText.name || toUserText.email || t.to_user || '');
+    const bookBId = requestedBook.id?.toString() || t.bookBId?.toString() || t.book_b_id?.toString() || t.bookId?.toString() || t.book_id?.toString() || '';
+    const bookAId = offeredBook.id?.toString() || t.bookAId?.toString() || t.book_a_id?.toString() || '';
+    const fromUserName = this.formatOwnerName(requesterUser.name || requesterUser.email || t.fromUserName || fromUserText.name || fromUserText.email || t.from_user || '');
+    const toUserName = this.formatOwnerName(ownerUser.name || ownerUser.email || t.toUserName || toUserText.name || toUserText.email || t.to_user || '');
+    const status = t.status || (t.status_total ? 'ACCEPTED' : 'PENDING');
 
     return {
       id: t.id?.toString() || '',
       bookId: bookBId,
-      bookTitle: t.bookTitle || t.book_b_title || t.book_b || '',
-      fromUserId: t.fromUserId?.toString() || t.from_user_id?.toString() || fromUserText.id || '',
+      bookTitle: requestedBook.title || t.bookTitle || t.book_b_title || t.book_b || '',
+      fromUserId: requesterUser.id?.toString() || t.fromUserId?.toString() || t.from_user_id?.toString() || fromUserText.id || '',
       fromUserName,
-      fromUserPhone: t.fromUserPhone || t.from_user_phone || t.fromPhone || '',
-      toUserId: t.toUserId?.toString() || t.to_user_id?.toString() || toUserText.id || '',
+      fromUserPhone: requesterUser.phone || t.fromUserPhone || t.from_user_phone || t.fromPhone || '',
+      toUserId: ownerUser.id?.toString() || t.toUserId?.toString() || t.to_user_id?.toString() || toUserText.id || '',
       toUserName,
-      toUserPhone: t.toUserPhone || t.to_user_phone || t.toPhone || '',
-      status: t.status || (t.status_total ? 'ACCEPTED' : 'OPEN'),
+      toUserPhone: ownerUser.phone || t.toUserPhone || t.to_user_phone || t.toPhone || '',
+      status,
       meetingPoint: t.meetingPoint || 'A combinar'
       ,
-      statusA: Boolean(t.statusA ?? t.status_a),
-      statusB: Boolean(t.statusB ?? t.status_b),
-      statusTotal: Boolean(t.statusTotal ?? t.status_total),
+      statusA: status === 'ACCEPTED',
+      statusB: status === 'ANSWERED' || status === 'ACCEPTED',
+      statusTotal: status === 'ACCEPTED',
       bookAId,
       bookBId,
-      bookATitle: t.bookATitle || t.book_a_title || t.book_a || '',
-      bookBTitle: t.bookBTitle || t.book_b_title || t.book_b || t.bookTitle || ''
+      bookATitle: offeredBook.title || t.bookATitle || t.book_a_title || t.book_a || '',
+      bookBTitle: requestedBook.title || t.bookBTitle || t.book_b_title || t.book_b || t.bookTitle || ''
     };
   }
 
@@ -198,49 +190,53 @@ class DBService {
     // Map response if hateoas
     const data = response.data;
     const rawExchanges = this.getEmbeddedList(data, ['exchangeResponseList']);
-    return rawExchanges.map(t => this.mergeLocalTradeState(this.mapTrade(t)));
+    return rawExchanges.map(t => this.mapTrade(t));
   }
 
   async getTradeById(id: string): Promise<Trade> {
     const response = await api.get(`/exchanges/${id}`);
-    return this.mergeLocalTradeState(this.mapTrade(response.data));
+    return this.mapTrade(response.data);
   }
 
   async createTrade(bookId: string, ownerId?: string, meetingPoint?: string): Promise<Trade> {
     const response = await api.post('/exchanges', { 
       bookId: Number(bookId),
-      book_id: Number(bookId),
-      book_b_id: Number(bookId),
-      toUserId: ownerId ? Number(ownerId) : undefined,
-      to_user: ownerId ? Number(ownerId) : undefined,
       meetingPoint
     });
     return this.mapTrade(response.data);
   }
 
   async updateTrade(id: string, dto: TradeUpdateDTO): Promise<Trade> {
-    try {
-      const response = await api.put(`/exchanges/${id}`, dto);
-      return this.mapTrade(response.data);
-    } catch (error) {
-      this.saveLocalTradeState(id, {
-        statusA: dto.status_a,
-        statusB: dto.status_b,
-        statusTotal: dto.status_a && dto.status_b,
-        bookAId: dto.book_a_id.toString(),
-        bookBId: dto.book_b_id.toString()
-      });
-      return this.mergeLocalTradeState(this.mapTrade({ id, ...dto }));
-    }
+    return this.respondExchange(id, dto.book_a_id.toString());
   }
 
-  async requesterAcceptTrade(trade: Trade): Promise<Trade> {
-    this.saveLocalTradeState(trade.id, {
-      statusA: true,
-      statusB: true,
-      statusTotal: true
+  async getExchanges(): Promise<Trade[]> {
+    return this.getTrades();
+  }
+
+  async getExchangeById(id: string): Promise<Trade> {
+    return this.getTradeById(id);
+  }
+
+  async createExchange(bookId: string, meetingPoint?: string): Promise<Trade> {
+    return this.createTrade(bookId, undefined, meetingPoint);
+  }
+
+  async respondExchange(exchangeId: string, offeredBookId: string): Promise<Trade> {
+    const response = await api.put(`/exchanges/${exchangeId}/respond`, {
+      offeredBookId: Number(offeredBookId)
     });
-    return this.mergeLocalTradeState(trade);
+    return this.mapTrade(response.data);
+  }
+
+  async acceptExchange(exchangeId: string): Promise<Trade> {
+    const response = await api.put(`/exchanges/${exchangeId}/accept`);
+    return this.mapTrade(response.data);
+  }
+
+  async cancelExchange(exchangeId: string): Promise<Trade> {
+    const response = await api.put(`/exchanges/${exchangeId}/cancel`);
+    return this.mapTrade(response.data);
   }
 
   async getChats(): Promise<ChatThread[]> {

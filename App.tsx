@@ -12,6 +12,11 @@ import Signup from './pages/Signup';
 import Chat from './pages/Chat';
 import Exchanges from './pages/Exchanges';
 import Wallet from './pages/Wallet';
+import { authService } from './services/authService';
+
+const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
+  return authService.isAuthenticated() ? children : <Navigate to="/login" replace />;
+};
 
 const App: React.FC = () => {
   return (
@@ -28,8 +33,8 @@ const App: React.FC = () => {
         <Route path="/cadastrar-livro" element={<AddBook />} />
         <Route path="/livro/:id" element={<BookDetails />} />
         <Route path="/meu-perfil" element={<Navigate to="/minha-estante" replace />} />
-        <Route path="/trocas" element={<Exchanges />} />
-        <Route path="/troca/:tradeId" element={<Exchanges />} />
+        <Route path="/trocas" element={<ProtectedRoute><Exchanges /></ProtectedRoute>} />
+        <Route path="/troca/:tradeId" element={<ProtectedRoute><Exchanges /></ProtectedRoute>} />
         <Route path="/chats" element={<Chat />} />
         <Route path="/chat/:tradeId" element={<Chat />} />
         <Route path="/carteira" element={<Wallet />} />

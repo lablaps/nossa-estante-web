@@ -30,7 +30,7 @@ const MapLibre: React.FC<MapLibreProps> = ({ lat, lng, zoom = 13, markers = [], 
     if (mapContainer.current) {
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        style: 'https://tiles.openfreemap.org/styles/liberty',
         center: [lng, lat],
         zoom: zoom
       });

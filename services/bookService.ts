@@ -19,7 +19,7 @@ export const bookService = {
   fetchBookByISBN: async (isbn: string): Promise<BookApiInfo | null> => {
     const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
     const cleanText = (value?: string) => value?.replace(/^\[|\]$/g, '').trim();
-    let hadApiError = false;
+    const getTextValue = (value: any) => typeof value === 'string' ? value : value?.value;
 
     try {
       const bibKey = `ISBN:${cleanIsbn}`;
@@ -44,8 +44,31 @@ export const bookService = {
         };
       }
     } catch (error) {
-      hadApiError = true;
       console.error('Error fetching book from Open Library:', error);
+    }
+
+    try {
+      const response = await axios.get(`https://openlibrary.org/isbn/${cleanIsbn}.json`);
+      const bookData = response.data;
+
+      if (bookData?.title) {
+        return {
+          title: bookData.title,
+          authors: [],
+          publisher: bookData.publishers?.[0],
+          publishedDate: bookData.publish_date,
+          description: getTextValue(bookData.description),
+          pageCount: bookData.number_of_pages,
+          thumbnail: bookData.covers?.[0] ? `https://covers.openlibrary.org/b/id/${bookData.covers[0]}-L.jpg` : undefined,
+          categories: bookData.subjects || [],
+          language: bookData.languages?.[0]?.key?.split('/').pop(),
+          edition: bookData.edition_name,
+          physicalFormat: bookData.physical_format,
+          publishPlace: cleanText(bookData.publish_places?.[0])
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching book from Open Library ISBN endpoint:', error);
     }
 
     try {
@@ -66,12 +89,7 @@ export const bookService = {
         };
       }
     } catch (error) {
-      hadApiError = true;
       console.error('Error fetching book from Google Books:', error);
-    }
-
-    if (hadApiError) {
-      throw new Error('Book ISBN API failed');
     }
 
     return null;
