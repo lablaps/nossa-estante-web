@@ -1,5 +1,9 @@
 package br.com.treinaweb.twjobs.api.auth.controllers;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,7 +22,10 @@ import br.com.treinaweb.twjobs.api.auth.dtos.TokenResponse;
 import br.com.treinaweb.twjobs.api.auth.dtos.UserRequest;
 import br.com.treinaweb.twjobs.api.auth.dtos.UserResponse;
 import br.com.treinaweb.twjobs.api.auth.mappers.UserMapper;
+import br.com.treinaweb.twjobs.core.enums.GeoType;
 import br.com.treinaweb.twjobs.core.enums.Role;
+import br.com.treinaweb.twjobs.core.models.Coordinates;
+import br.com.treinaweb.twjobs.core.models.Geometry;
 import br.com.treinaweb.twjobs.core.repositories.UserRepository;
 import br.com.treinaweb.twjobs.core.services.jwt.JjwtJwtService;
 import br.com.treinaweb.twjobs.core.services.jwt.JwtService;
@@ -66,6 +73,31 @@ public class AuthRestController {
 
 
 
+                    // Cadastra localização do usuário
+        // """   
+        //    Quando logar pela primeira vez a localização vai ser guardada
+        //    Outra forma será a edição ou cadastro direto na endpoint de editar usuário
+        //                                                                              """
+        // System.out.println("*********************** User geoloc\n");
+        // System.out.println(user.getGeometry());
+        if(user.getGeometry()==null) {
+            Geometry userGeoLoc = new Geometry();
+            userGeoLoc.setUser(user);
+            userGeoLoc.setGeoType(GeoType.valueOf("POINT"));
+    
+            List<Coordinates> coordinatesList = new ArrayList<>();
+            Coordinates testCoordinates = new Coordinates();
+            testCoordinates.setLatitude(BigDecimal.valueOf(1.2));
+            testCoordinates.setLongitude(BigDecimal.valueOf(1.2));
+            coordinatesList.add(testCoordinates);
+            
+            userGeoLoc.setCoordinates(coordinatesList);
+    
+            user.setGeometry(userGeoLoc);
+        }
+
+
+
         var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
                 loginRequest.getEmail(),
                 loginRequest.getPassword()
@@ -74,6 +106,8 @@ public class AuthRestController {
         return TokenResponse.builder()
                 .accessToken(jwtService.generateAccessToken(loginRequest.getEmail(), user.getRole()))
                 .refreshToken(jwtService.generateRefreshToken(loginRequest.getEmail(), user.getRole()))
+                .latitude(String.valueOf(user.getGeometry().getCoordinates().get(0).getLatitude()))
+                .longitude(String.valueOf(user.getGeometry().getCoordinates().get(0).getLongitude()))
                 .build();
     }
 

@@ -11,6 +11,9 @@ import lombok.*;
 @EqualsAndHashCode(onlyExplicitlyIncluded=true)
 public class UserData {
     
+    // Modificated (16/06/2026)
+
+
     @Id
     @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +26,10 @@ public class UserData {
 
     private String text;
 
+    // // Geoloc fields
+    // @OneToOne(cascade = CascadeType.ALL)
+    // private Geometry geometry;
+
     // New mapping
     private String cpf;
     private String birthDate;
@@ -32,5 +39,7 @@ public class UserData {
     private String position;
     private String organization;
     private String department;
+
+
 
 }

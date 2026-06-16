@@ -1,6 +1,7 @@
 package br.com.treinaweb.twjobs.api.users.dtos;
 
 import br.com.treinaweb.twjobs.core.enums.Role;
+import br.com.treinaweb.twjobs.core.models.Geometry;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,5 +18,6 @@ public class UserResponse {
     private Role role;
     private Boolean sendEmail;
     private boolean verified;
-
+     
+    private Geometry geoloc;
 }

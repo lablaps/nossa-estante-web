@@ -65,6 +65,11 @@ public class User {
     // @PrimaryKeyJoinColumn
     // private UserData userData;
 
+    // Geoloc fields
+    @Builder.Default
+    @OneToOne(cascade = CascadeType.ALL)
+    private Geometry geometry = null;
+
 
     // New Mapping
     private String passwordConfirmation;

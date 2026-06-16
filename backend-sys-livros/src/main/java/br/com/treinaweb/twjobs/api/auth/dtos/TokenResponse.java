@@ -14,4 +14,7 @@ public class TokenResponse {
     private String accessToken;
     private String refreshToken;
   //  private String roleReturn;
+
+    private String latitude;
+    private String longitude;
 }
