@@ -33,7 +33,7 @@ public class Geometry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "geometry")
     private User user;
 
     // type/enum

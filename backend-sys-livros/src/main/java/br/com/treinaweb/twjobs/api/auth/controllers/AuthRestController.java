@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,6 +27,9 @@ import br.com.treinaweb.twjobs.core.enums.GeoType;
 import br.com.treinaweb.twjobs.core.enums.Role;
 import br.com.treinaweb.twjobs.core.models.Coordinates;
 import br.com.treinaweb.twjobs.core.models.Geometry;
+import br.com.treinaweb.twjobs.core.models.User;
+import br.com.treinaweb.twjobs.core.repositories.CoordinatesRepository;
+import br.com.treinaweb.twjobs.core.repositories.GeometryRepository;
 import br.com.treinaweb.twjobs.core.repositories.UserRepository;
 import br.com.treinaweb.twjobs.core.services.jwt.JjwtJwtService;
 import br.com.treinaweb.twjobs.core.services.jwt.JwtService;
@@ -43,8 +47,10 @@ public class AuthRestController {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
 
-    
     private final JjwtJwtService jjwtService;
+
+    private final GeometryRepository geometryRepository;
+    private final CoordinatesRepository coordinatesRepository;
     
 
     @PostMapping("/register")
@@ -67,33 +73,61 @@ public class AuthRestController {
     public TokenResponse login(@RequestBody @Valid LoginRequest loginRequest) {
         var user = userRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
         
-            if(user.getRole() != Role.ADMIN && !user.getVerified()) {
-                        throw new RuntimeException("You must verify your account!");
-            }
+        BigDecimal latitude_response;
+        BigDecimal longitude_response;
+            // TEMP DISABLE - IMPORTANT CHANGE LATER
+            // if(user.getRole() != Role.ADMIN && !user.getVerified()) {
+            //             throw new RuntimeException("You must verify your account!");
+            // }
 
 
 
-                    // Cadastra localização do usuário
+        //                  Cadastra localização do usuário
         // """   
         //    Quando logar pela primeira vez a localização vai ser guardada
         //    Outra forma será a edição ou cadastro direto na endpoint de editar usuário
         //                                                                              """
         // System.out.println("*********************** User geoloc\n");
         // System.out.println(user.getGeometry());
-        if(user.getGeometry()==null) {
-            Geometry userGeoLoc = new Geometry();
-            userGeoLoc.setUser(user);
-            userGeoLoc.setGeoType(GeoType.valueOf("POINT"));
-    
+        if(user.getGeometry()==null && loginRequest.getLatitude()!=null && loginRequest.getLongitude()!=null && loginRequest.getGeoType() != null) {
+
+            // Coordenadas
             List<Coordinates> coordinatesList = new ArrayList<>();
             Coordinates testCoordinates = new Coordinates();
-            testCoordinates.setLatitude(BigDecimal.valueOf(1.2));
-            testCoordinates.setLongitude(BigDecimal.valueOf(1.2));
+            testCoordinates.setLatitude(loginRequest.getLatitude());
+            testCoordinates.setLongitude(loginRequest.getLongitude());
             coordinatesList.add(testCoordinates);
             
-            userGeoLoc.setCoordinates(coordinatesList);
-    
-            user.setGeometry(userGeoLoc);
+            // Grava coordenadas no banco de dados
+            List<Coordinates> coordinatesList_ = coordinatesRepository.saveAll(coordinatesList);
+
+            System.out.println(coordinatesList_);
+            
+            // Geometry
+            Geometry geometry = new Geometry();
+            geometry.setUser(user);
+            geometry.setGeoType(loginRequest.getGeoType());
+            geometry.setCoordinates(coordinatesList_);
+
+            // Grava geometry no banco de dados
+            Geometry geometry_ = geometryRepository.save(geometry);
+
+            System.out.println(geometry_);
+
+            var user_ = new User();
+
+            user_.setGeometry(geometry_);
+
+            System.out.println(user_);
+
+            BeanUtils.copyProperties(user_, user, "id", "name", "email","password","role", "text", "verified", "passwordConfirmation", "roleDescription");
+
+
+            userRepository.save(user);
+
+            // Log armazenando localização
+            System.out.println("******************\n");
+            System.out.println("Localização do usuário armazenada\n");
         }
 
 

@@ -68,6 +68,7 @@ public class User {
     // Geoloc fields
     @Builder.Default
     @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "geometry_id", referencedColumnName = "id")
     private Geometry geometry = null;
 
 

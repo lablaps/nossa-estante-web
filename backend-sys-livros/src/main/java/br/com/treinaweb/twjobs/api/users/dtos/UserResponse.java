@@ -19,5 +19,5 @@ public class UserResponse {
     private Boolean sendEmail;
     private boolean verified;
      
-    private Geometry geoloc;
+    private Geometry geometry;
 }

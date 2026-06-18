@@ -1,5 +1,8 @@
 package br.com.treinaweb.twjobs.api.auth.dtos;
 
+import java.math.BigDecimal;
+
+import br.com.treinaweb.twjobs.core.enums.GeoType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
@@ -19,6 +22,13 @@ public class LoginRequest {
     
     @NotEmpty
     private String password;
+
+    // longitude - x
+    private BigDecimal longitude;
+    // latitude - y
+    private BigDecimal latitude;
+    // type
+    private GeoType geoType;
 
     
 }

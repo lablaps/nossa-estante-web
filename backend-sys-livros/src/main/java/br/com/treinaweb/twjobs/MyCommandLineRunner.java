@@ -1,5 +1,7 @@
 package br.com.treinaweb.twjobs;
 
+import java.text.ParseException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +19,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MyCommandLineRunner implements CommandLineRunner {
 
+
+
+    // TESTE ok ok
    
     private final UserRepository userRepository;
 

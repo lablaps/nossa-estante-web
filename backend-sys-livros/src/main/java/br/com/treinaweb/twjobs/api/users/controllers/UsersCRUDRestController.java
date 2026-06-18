@@ -60,6 +60,13 @@ public class UsersCRUDRestController {
         return pagedResourcesAssembler.toModel(users, userAssembler);
     }
 
+
+
+
+    // Fazer um Put específico para mudar somente role
+    // Fazer um outro específico somente para mudança de senha
+    // E outro somente para mudança de localização
+
     @PutMapping("/{id}")
     @TWJobsPermissions.IsAdmin
     // @TWJobsPermissions.IsCompany
@@ -69,7 +76,7 @@ public class UsersCRUDRestController {
          .orElseThrow(RuntimeException::new);
 
         var userData = userMapper.toUser(userRequest);
-        BeanUtils.copyProperties(userData, userSaved, "id", "name", "email","password","text");
+        BeanUtils.copyProperties(userData, userSaved, "id", "name", "email","password", "text", "verified");
 
         userSaved = userRepository.save(userSaved);
         //A única coisa que pode alterar até agora é o atributo SendEmail
