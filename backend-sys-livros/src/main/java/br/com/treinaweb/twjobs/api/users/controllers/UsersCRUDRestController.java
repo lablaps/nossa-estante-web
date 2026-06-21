@@ -5,6 +5,7 @@ import br.com.treinaweb.twjobs.api.users.assemblers.UserAssembler;
 import br.com.treinaweb.twjobs.api.users.dtos.UserRequest;
 import br.com.treinaweb.twjobs.api.users.dtos.UserResponse;
 import br.com.treinaweb.twjobs.api.users.mappers.UserMapper;
+import br.com.treinaweb.twjobs.core.enums.GeoType;
 // import br.com.treinaweb.twjobs.api.vessels.assemblers.VesselAssembler;
 // import br.com.treinaweb.twjobs.api.vessels.mappers.VesselMapper;
 import br.com.treinaweb.twjobs.core.exceptions.NegocioException;
@@ -14,6 +15,7 @@ import br.com.treinaweb.twjobs.core.repositories.UserRepository;
 import br.com.treinaweb.twjobs.core.services.auth.SecurityService;
 import lombok.RequiredArgsConstructor;
 
+import org.hibernate.query.Page;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @RestController
@@ -49,14 +52,20 @@ public class UsersCRUDRestController {
     private final PagedResourcesAssembler<UserResponse> pagedResourcesAssembler;
 
 
-    
-
     @GetMapping
     // @TWJobsPermissions.IsCompany     
     public CollectionModel<EntityModel<UserResponse>> findAll(@PageableDefault(value = 15) Pageable pageable) {
 
         var users = userRepository.findAll(pageable)
                 .map(userMapper::toUserResponse);
+
+
+        for (UserResponse i : users) {
+                i.setGeoType(GeoType.valueOf("POINT"));
+                i.setLongitude(BigDecimal.valueOf(2.4));
+                i.setLatitude(BigDecimal.valueOf(2.4));
+        }
+        
         return pagedResourcesAssembler.toModel(users, userAssembler);
     }
 
